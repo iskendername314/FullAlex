@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Gym Cədvəli</title>
+
+<!-- iOS / Android home screen behavior -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Gym Cədvəli" />
+<meta name="theme-color" content="#0b0d12" />
+
+<style>
+  :root {
+    --bg-top: #0b0d12;
+    --bg-bottom: #14171f;
+    --panel: #11141b;
+    --panel-border: #232730;
+    --row-border: #1e212a;
+    --text: #e8e8ec;
+    --text-dim: #9aa0ac;
+    --text-faint: #8b8f9c;
+    --warn: #f59e0b;
+    --a: #f97316;
+    --b: #06b6d4;
+    --c: #a855f7;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-bottom);
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    padding: env(safe-area-inset-top, 20px) 14px 40px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+  }
+
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 18px; }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: 0.3px;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--text-faint);
+    margin: 6px 0 0;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 12px;
+    border: 1px solid #2a2e38;
+    background: #181b22;
+    color: #9aa0ac;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .tab.active[data-day="A"] { border-color: var(--a); background: rgba(249,115,22,0.1); color: var(--a); }
+  .tab.active[data-day="B"] { border-color: var(--b); background: rgba(6,182,212,0.1); color: var(--b); }
+  .tab.active[data-day="C"] { border-color: var(--c); background: rgba(168,85,247,0.1); color: var(--c); }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 14px;
+    display: none;
+  }
+  .panel.active { display: block; }
+
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--row-border);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row .num {
+    min-width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .panel[data-day="A"] .num { background: rgba(249,115,22,0.13); color: var(--a); }
+  .panel[data-day="B"] .num { background: rgba(6,182,212,0.13); color: var(--b); }
+  .panel[data-day="C"] .num { background: rgba(168,85,247,0.13); color: var(--c); }
+
+  .row .info { flex: 1; }
+  .row .name { font-size: 15px; font-weight: 600; }
+  .row .note { font-size: 12px; color: var(--warn); margin-top: 2px; }
+  .row .scheme {
+    font-size: 13px;
+    font-weight: 700;
+    color: #cfd2d8;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  /* checkbox / done state */
+  .check {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    border: 1.5px solid #3a3f4a;
+    background: transparent;
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .check svg {
+    width: 13px;
+    height: 13px;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+  }
+  .row.done .check { background: #2dd4bf; border-color: #2dd4bf; }
+  .row.done .check svg { opacity: 1; }
+  .row.done .name { color: #6b7280; text-decoration: line-through; }
+  .row.done .scheme { color: #4b5563; }
+
+  .footer {
+    margin-top: 16px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .footer .label { color: var(--text); font-weight: 700; }
+  .footer .warn { color: var(--warn); }
+
+  .reset-btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 11px 0;
+    border-radius: 12px;
+    border: 1px solid #2a2e38;
+    background: #181b22;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .reset-btn:active { background: #1e222b; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1>Full Body — Həftədə 3 gün</h1>
+    <p>B.e / Çər / Cü &nbsp;•&nbsp; Setlər arası istirahət 60-90 san</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-day="A" onclick="showDay('A')">Gün A</button>
+    <button class="tab" data-day="B" onclick="showDay('B')">Gün B</button>
+    <button class="tab" data-day="C" onclick="showDay('C')">Gün C</button>
+  </div>
+
+  <div class="panel active" data-day="A" id="panel-A"></div>
+  <div class="panel" data-day="B" id="panel-B"></div>
+  <div class="panel" data-day="C" id="panel-C"></div>
+
+  <button class="reset-btn" onclick="resetChecks()">Bu günün işarələrini sıfırla</button>
+
+  <div class="footer">
+    <span class="label">Sxem: </span>
+    A → yüngül/istirahət → B → istirahət → C → 2 gün tam istirahət → təkrar A
+    <br>
+    <span class="warn">⚠ Squat və sol ayağa ağır yük — radioloq nəticəsinə qədər ehtiyatlı.</span>
+  </div>
+</div>
+
+<script>
+  const DAYS = {
+    A: [
+      { name: "Bench press", scheme: "3×10-12" },
+      { name: "Lat pulldown", scheme: "3×10-12" },
+      { name: "Leg press", scheme: "3×10-12", note: "Sol ayağa ehtiyatlı" },
+      { name: "Shoulder press (dumbbell)", scheme: "3×10-12" },
+      { name: "Biceps curl", scheme: "3×10-12" },
+      { name: "Triceps pushdown", scheme: "3×10-12" },
+      { name: "Plank", scheme: "3×40-60 san" },
+    ],
+    B: [
+      { name: "Incline dumbbell press", scheme: "3×10-12" },
+      { name: "Seated cable row", scheme: "3×10-12" },
+      { name: "Leg extension", scheme: "3×10-12" },
+      { name: "Leg curl", scheme: "3×10-12" },
+      { name: "Lateral raise", scheme: "3×10-12" },
+      { name: "Hammer curl", scheme: "3×10-12" },
+      { name: "Cable crunch", scheme: "3×10-12" },
+    ],
+    C: [
+      { name: "Push-ups", scheme: "3×10-12", note: "Ağır gündə əlavə ağırlıq, kürəkdə" },
+      { name: "Pull-ups (və ya assisted)", scheme: "3×10-12" },
+      { name: "Calf raise (standing)", scheme: "3×10-12", note: "Sol ayağa ehtiyatlı" },
+      { name: "Rear delt fly", scheme: "3×10-12" },
+      { name: "Dips", scheme: "3×10-12" },
+      { name: "V-ups", scheme: "3×10-12" },
+    ],
+  };
+
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0b0d12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function storageKey(day) {
+    const today = new Date().toISOString().slice(0, 10);
+    return `gym-${today}-${day}`;
+  }
+
+  function loadDone(day) {
+    try {
+      const raw = localStorage.getItem(storageKey(day));
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveDone(day, doneArr) {
+    try { localStorage.setItem(storageKey(day), JSON.stringify(doneArr)); } catch (e) {}
+  }
+
+  function renderDay(day) {
+    const panel = document.getElementById(`panel-${day}`);
+    const done = loadDone(day);
+    panel.innerHTML = DAYS[day].map((ex, i) => `
+      <div class="row ${done.includes(i) ? 'done' : ''}" data-idx="${i}">
+        <div class="check" onclick="toggleCheck('${day}', ${i})">${CHECK_SVG}</div>
+        <div class="info">
+          <div class="name">${ex.name}</div>
+          ${ex.note ? `<div class="note">⚠ ${ex.note}</div>` : ''}
+        </div>
+        <div class="scheme">${ex.scheme}</div>
+      </div>
+    `).join('');
+  }
+
+  function toggleCheck(day, idx) {
+    let done = loadDone(day);
+    if (done.includes(idx)) {
+      done = done.filter(x => x !== idx);
+    } else {
+      done.push(idx);
+    }
+    saveDone(day, done);
+    renderDay(day);
+  }
+
+  function resetChecks() {
+    const active = document.querySelector('.tab.active').dataset.day;
+    saveDone(active, []);
+    renderDay(active);
+  }
+
+  function showDay(day) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.day === day));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.day === day));
+  }
+
+  ['A', 'B', 'C'].forEach(renderDay);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Cədvəli & Günlük</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+input, select, textarea { outline: none; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a1a30; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+body.light { background: #ffffff; }
+body.dark { background: #0d0d1a; }
+</style>
+</head>
+<body class="dark">
+<div id="root"></div>
+<script type="text/babel">
+
+const HEREKETLER_SIYAHI = [
+  "Flat Bench Press",
+  "Incline Bench Press",
+  "Pec Deck (Butterfly)",
+  "Cable Crossover",
+  "Dumbbell Fly",
+  "Lat Pulldown",
+  "Pull-Up",
+  "Dips",
+  "Seated Cable Row",
+  "Plate-Loaded Row",
+  "Hyperextension",
+  "Shoulder Press",
+  "Lateral Raise",
+  "Front Raise",
+  "Rear Delt Fly",
+  "Rear Delt Fly (Band)",
+  "Barbell Curl",
+  "Hammer Curl",
+  "Triceps Pushdown",
+  "Digər"
+];
+
+const GYM_PROQRAM = {
+  A: { label: "Gün A", color: "#f97316" },
+  B: { label: "Gün B", color: "#06b6d4" },
+  C: { label: "Gün C", color: "#a855f7" },
+};
+
+// Hər gün üçün standart hərəkət şablonu (ad + hədəf set sayı)
+const GYM_HEREKETLERI = {
+  A: [
+    { ad: "Flat Bench Press", set: 5 },
+    { ad: "Pull-Up", set: 5 },
+    { ad: "Shoulder Press", set: 5 },
+    { ad: "Seated Cable Row", set: 5 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+  B: [
+    { ad: "Incline Bench Press", set: 5 },
+    { ad: "Seated Cable Row", set: 5 },
+    { ad: "Rear Delt Fly (Band)", set: 5 },
+    { ad: "Hammer Curl", set: 5 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+  C: [
+    { ad: "Pull-Up", set: 5 },
+    { ad: "Dips", set: 5 },
+    { ad: "Triceps Pushdown", set: 5 },
+    { ad: "Dumbbell Fly", set: 4 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+};
+
+const GUNLER = [
+  { tarix: "17.06.2026", gun: "Çərşənbə", ay: "İyun" },
+  { tarix: "18.06.2026", gun: "Cümə axşamı", ay: "İyun" },
+  { tarix: "19.06.2026", gun: "Cümə", ay: "İyun" },
+  { tarix: "20.06.2026", gun: "Şənbə", ay: "İyun" },
+  { tarix: "21.06.2026", gun: "Bazar", ay: "İyun" },
+  { tarix: "22.06.2026", gun: "Bazar ertəsi", ay: "İyun" },
+  { tarix: "23.06.2026", gun: "Çərşənbə axşamı", ay: "İyun" },
+  { tarix: "24.06.2026", gun: "Çərşənbə", ay: "İyun" },
+  { tarix: "25.06.2026", gun: "Cümə axşamı", ay: "İyun" },
+  { tarix: "26.06.2026", gun: "Cümə", ay: "İyun" },
+  { tarix: "27.06.2026", gun: "Şənbə", ay: "İyun" },
+  { tarix: "28.06.2026", gun: "Bazar", ay: "İyun" },
+  { tarix: "29.06.2026", gun: "Bazar ertəsi", ay: "İyun" },
+  { tarix: "30.06.2026", gun: "Çərşənbə axşamı", ay: "İyun" },
+  { tarix: "01.07.2026", gun: "Çərşənbə", ay: "İyul" },
+  { tarix: "02.07.2026", gun: "Cümə axşamı", ay: "İyul" },
+  { tarix: "03.07.2026", gun: "Cümə", ay: "İyul" },
+  { tarix: "04.07.2026", gun: "Şənbə", ay: "İyul" },
+  { tarix: "05.07.2026", gun: "Bazar", ay: "İyul" },
+  { tarix: "06.07.2026", gun: "Bazar ertəsi", ay: "İyul" },
+  { tarix: "07.07.2026", gun: "Çərşənbə axşamı", ay: "İyul" },
+  { tarix: "08.07.2026", gun: "Çərşənbə", ay: "İyul" },
+  { tarix: "09.07.2026", gun: "Cümə axşamı", ay: "İyul" },
+  { tarix: "10.07.2026", gun: "Cümə", ay: "İyul" },
+  { tarix: "11.07.2026", gun: "Şənbə", ay: "İyul" },
+  { tarix: "12.07.2026", gun: "Bazar", ay: "İyul" },
+  { tarix: "13.07.2026", gun: "Bazar ertəsi", ay: "İyul" },
+  { tarix: "14.07.2026", gun: "Çərşənbə axşamı", ay: "İyul" },
+  { tarix: "15.07.2026", gun: "Çərşənbə", ay: "İyul" },
+  { tarix: "16.07.2026", gun: "Cümə axşamı", ay: "İyul" },
+  { tarix: "17.07.2026", gun: "Cümə", ay: "İyul" },
+  { tarix: "18.07.2026", gun: "Şənbə", ay: "İyul" },
+  { tarix: "19.07.2026", gun: "Bazar", ay: "İyul" },
+  { tarix: "20.07.2026", gun: "Bazar ertəsi", ay: "İyul" },
+  { tarix: "21.07.2026", gun: "Çərşənbə axşamı", ay: "İyul" },
+  { tarix: "22.07.2026", gun: "Çərşənbə", ay: "İyul" },
+  { tarix: "23.07.2026", gun: "Cümə axşamı", ay: "İyul" },
+  { tarix: "24.07.2026", gun: "Cümə", ay: "İyul" },
+  { tarix: "25.07.2026", gun: "Şənbə", ay: "İyul" },
+  { tarix: "26.07.2026", gun: "Bazar", ay: "İyul" },
+  { tarix: "27.07.2026", gun: "Bazar ertəsi", ay: "İyul" },
+  { tarix: "28.07.2026", gun: "Çərşənbə axşamı", ay: "İyul" },
+  { tarix: "29.07.2026", gun: "Çərşənbə", ay: "İyul" },
+  { tarix: "30.07.2026", gun: "Cümə axşamı", ay: "İyul" },
+  { tarix: "31.07.2026", gun: "Cümə", ay: "İyul" },
+  { tarix: "01.08.2026", gun: "Şənbə", ay: "Avqust" },
+  { tarix: "02.08.2026", gun: "Bazar", ay: "Avqust" },
+  { tarix: "03.08.2026", gun: "Bazar ertəsi", ay: "Avqust" },
+  { tarix: "04.08.2026", gun: "Çərşənbə axşamı", ay: "Avqust" },
+  { tarix: "05.08.2026", gun: "Çərşənbə", ay: "Avqust" },
+  { tarix: "06.08.2026", gun: "Cümə axşamı", ay: "Avqust" },
+  { tarix: "07.08.2026", gun: "Cümə", ay: "Avqust" },
+  { tarix: "08.08.2026", gun: "Şənbə", ay: "Avqust" },
+  { tarix: "09.08.2026", gun: "Bazar", ay: "Avqust" },
+  { tarix: "10.08.2026", gun: "Bazar ertəsi", ay: "Avqust" },
+  { tarix: "11.08.2026", gun: "Çərşənbə axşamı", ay: "Avqust" },
+  { tarix: "12.08.2026", gun: "Çərşənbə", ay: "Avqust" },
+  { tarix: "13.08.2026", gun: "Cümə axşamı", ay: "Avqust" },
+  { tarix: "14.08.2026", gun: "Cümə", ay: "Avqust" },
+  { tarix: "15.08.2026", gun: "Şənbə", ay: "Avqust" },
+  { tarix: "16.08.2026", gun: "Bazar", ay: "Avqust" },
+  { tarix: "17.08.2026", gun: "Bazar ertəsi", ay: "Avqust" },
+  { tarix: "18.08.2026", gun: "Çərşənbə axşamı", ay: "Avqust" },
+  { tarix: "19.08.2026", gun: "Çərşənbə", ay: "Avqust" },
+  { tarix: "20.08.2026", gun: "Cümə axşamı", ay: "Avqust" },
+  { tarix: "21.08.2026", gun: "Cümə", ay: "Avqust" },
+  { tarix: "22.08.2026", gun: "Şənbə", ay: "Avqust" },
+  { tarix: "23.08.2026", gun: "Bazar", ay: "Avqust" },
+  { tarix: "24.08.2026", gun: "Bazar ertəsi", ay: "Avqust" },
+  { tarix: "25.08.2026", gun: "Çərşənbə axşamı", ay: "Avqust" },
+  { tarix: "26.08.2026", gun: "Çərşənbə", ay: "Avqust" },
+  { tarix: "27.08.2026", gun: "Cümə axşamı", ay: "Avqust" },
+  { tarix: "28.08.2026", gun: "Cümə", ay: "Avqust" },
+  { tarix: "29.08.2026", gun: "Şənbə", ay: "Avqust" },
+  { tarix: "30.08.2026", gun: "Bazar", ay: "Avqust" },
+  { tarix: "31.08.2026", gun: "Bazar ertəsi", ay: "Avqust" },
+  { tarix: "01.09.2026", gun: "Çərşənbə axşamı", ay: "Sentyabr" },
+  { tarix: "02.09.2026", gun: "Çərşənbə", ay: "Sentyabr" },
+  { tarix: "03.09.2026", gun: "Cümə axşamı", ay: "Sentyabr" },
+  { tarix: "04.09.2026", gun: "Cümə", ay: "Sentyabr" },
+  { tarix: "05.09.2026", gun: "Şənbə", ay: "Sentyabr" },
+  { tarix: "06.09.2026", gun: "Bazar", ay: "Sentyabr" },
+  { tarix: "07.09.2026", gun: "Bazar ertəsi", ay: "Sentyabr" },
+  { tarix: "08.09.2026", gun: "Çərşənbə axşamı", ay: "Sentyabr" },
+  { tarix: "09.09.2026", gun: "Çərşənbə", ay: "Sentyabr" },
+  { tarix: "10.09.2026", gun: "Cümə axşamı", ay: "Sentyabr" },
+  { tarix: "11.09.2026", gun: "Cümə", ay: "Sentyabr" },
+  { tarix: "12.09.2026", gun: "Şənbə", ay: "Sentyabr" },
+  { tarix: "13.09.2026", gun: "Bazar", ay: "Sentyabr" },
+  { tarix: "14.09.2026", gun: "Bazar ertəsi", ay: "Sentyabr" },
+  { tarix: "15.09.2026", gun: "Çərşənbə axşamı", ay: "Sentyabr" },
+  { tarix: "16.09.2026", gun: "Çərşənbə", ay: "Sentyabr" },
+  { tarix: "17.09.2026", gun: "Cümə axşamı", ay: "Sentyabr" },
+  { tarix: "18.09.2026", gun: "Cümə", ay: "Sentyabr" },
+  { tarix: "19.09.2026", gun: "Şənbə", ay: "Sentyabr" },
+  { tarix: "20.09.2026", gun: "Bazar", ay: "Sentyabr" },
+  { tarix: "21.09.2026", gun: "Bazar ertəsi", ay: "Sentyabr" },
+  { tarix: "22.09.2026", gun: "Çərşənbə axşamı", ay: "Sentyabr" },
+  { tarix: "23.09.2026", gun: "Çərşənbə", ay: "Sentyabr" },
+  { tarix: "24.09.2026", gun: "Cümə axşamı", ay: "Sentyabr" },
+  { tarix: "25.09.2026", gun: "Cümə", ay: "Sentyabr" },
+  { tarix: "26.09.2026", gun: "Şənbə", ay: "Sentyabr" },
+  { tarix: "27.09.2026", gun: "Bazar", ay: "Sentyabr" },
+  { tarix: "28.09.2026", gun: "Bazar ertəsi", ay: "Sentyabr" },
+  { tarix: "29.09.2026", gun: "Çərşənbə axşamı", ay: "Sentyabr" },
+  { tarix: "30.09.2026", gun: "Çərşənbə", ay: "Sentyabr" },
+  { tarix: "01.10.2026", gun: "Cümə axşamı", ay: "Oktyabr" },
+  { tarix: "02.10.2026", gun: "Cümə", ay: "Oktyabr" },
+  { tarix: "03.10.2026", gun: "Şənbə", ay: "Oktyabr" },
+  { tarix: "04.10.2026", gun: "Bazar", ay: "Oktyabr" },
+  { tarix: "05.10.2026", gun: "Bazar ertəsi", ay: "Oktyabr" },
+  { tarix: "06.10.2026", gun: "Çərşənbə axşamı", ay: "Oktyabr" },
+  { tarix: "07.10.2026", gun: "Çərşənbə", ay: "Oktyabr" },
+  { tarix: "08.10.2026", gun: "Cümə axşamı", ay: "Oktyabr" },
+  { tarix: "09.10.2026", gun: "Cümə", ay: "Oktyabr" },
+  { tarix: "10.10.2026", gun: "Şənbə", ay: "Oktyabr" },
+  { tarix: "11.10.2026", gun: "Bazar", ay: "Oktyabr" },
+  { tarix: "12.10.2026", gun: "Bazar ertəsi", ay: "Oktyabr" },
+  { tarix: "13.10.2026", gun: "Çərşənbə axşamı", ay: "Oktyabr" },
+  { tarix: "14.10.2026", gun: "Çərşənbə", ay: "Oktyabr" },
+  { tarix: "15.10.2026", gun: "Cümə axşamı", ay: "Oktyabr" },
+  { tarix: "16.10.2026", gun: "Cümə", ay: "Oktyabr" },
+  { tarix: "17.10.2026", gun: "Şənbə", ay: "Oktyabr" },
+  { tarix: "18.10.2026", gun: "Bazar", ay: "Oktyabr" },
+  { tarix: "19.10.2026", gun: "Bazar ertəsi", ay: "Oktyabr" },
+  { tarix: "20.10.2026", gun: "Çərşənbə axşamı", ay: "Oktyabr" },
+  { tarix: "21.10.2026", gun: "Çərşənbə", ay: "Oktyabr" },
+  { tarix: "22.10.2026", gun: "Cümə axşamı", ay: "Oktyabr" },
+  { tarix: "23.10.2026", gun: "Cümə", ay: "Oktyabr" },
+  { tarix: "24.10.2026", gun: "Şənbə", ay: "Oktyabr" },
+  { tarix: "25.10.2026", gun: "Bazar", ay: "Oktyabr" },
+  { tarix: "26.10.2026", gun: "Bazar ertəsi", ay: "Oktyabr" },
+  { tarix: "27.10.2026", gun: "Çərşənbə axşamı", ay: "Oktyabr" },
+  { tarix: "28.10.2026", gun: "Çərşənbə", ay: "Oktyabr" },
+  { tarix: "29.10.2026", gun: "Cümə axşamı", ay: "Oktyabr" },
+  { tarix: "30.10.2026", gun: "Cümə", ay: "Oktyabr" },
+  { tarix: "31.10.2026", gun: "Şənbə", ay: "Oktyabr" },
+  { tarix: "01.11.2026", gun: "Bazar", ay: "Noyabr" },
+  { tarix: "02.11.2026", gun: "Bazar ertəsi", ay: "Noyabr" },
+  { tarix: "03.11.2026", gun: "Çərşənbə axşamı", ay: "Noyabr" },
+  { tarix: "04.11.2026", gun: "Çərşənbə", ay: "Noyabr" },
+  { tarix: "05.11.2026", gun: "Cümə axşamı", ay: "Noyabr" },
+  { tarix: "06.11.2026", gun: "Cümə", ay: "Noyabr" },
+  { tarix: "07.11.2026", gun: "Şənbə", ay: "Noyabr" },
+  { tarix: "08.11.2026", gun: "Bazar", ay: "Noyabr" },
+  { tarix: "09.11.2026", gun: "Bazar ertəsi", ay: "Noyabr" },
+  { tarix: "10.11.2026", gun: "Çərşənbə axşamı", ay: "Noyabr" },
+  { tarix: "11.11.2026", gun: "Çərşənbə", ay: "Noyabr" },
+  { tarix: "12.11.2026", gun: "Cümə axşamı", ay: "Noyabr" },
+  { tarix: "13.11.2026", gun: "Cümə", ay: "Noyabr" },
+  { tarix: "14.11.2026", gun: "Şənbə", ay: "Noyabr" },
+  { tarix: "15.11.2026", gun: "Bazar", ay: "Noyabr" },
+  { tarix: "16.11.2026", gun: "Bazar ertəsi", ay: "Noyabr" },
+  { tarix: "17.11.2026", gun: "Çərşənbə axşamı", ay: "Noyabr" },
+  { tarix: "18.11.2026", gun: "Çərşənbə", ay: "Noyabr" },
+  { tarix: "19.11.2026", gun: "Cümə axşamı", ay: "Noyabr" },
+  { tarix: "20.11.2026", gun: "Cümə", ay: "Noyabr" },
+  { tarix: "21.11.2026", gun: "Şənbə", ay: "Noyabr" },
+  { tarix: "22.11.2026", gun: "Bazar", ay: "Noyabr" },
+  { tarix: "23.11.2026", gun: "Bazar ertəsi", ay: "Noyabr" },
+  { tarix: "24.11.2026", gun: "Çərşənbə axşamı", ay: "Noyabr" },
+  { tarix: "25.11.2026", gun: "Çərşənbə", ay: "Noyabr" },
+  { tarix: "26.11.2026", gun: "Cümə axşamı", ay: "Noyabr" },
+  { tarix: "27.11.2026", gun: "Cümə", ay: "Noyabr" },
+  { tarix: "28.11.2026", gun: "Şənbə", ay: "Noyabr" },
+  { tarix: "29.11.2026", gun: "Bazar", ay: "Noyabr" },
+  { tarix: "30.11.2026", gun: "Bazar ertəsi", ay: "Noyabr" },
+  { tarix: "01.12.2026", gun: "Çərşənbə axşamı", ay: "Dekabr" },
+  { tarix: "02.12.2026", gun: "Çərşənbə", ay: "Dekabr" },
+  { tarix: "03.12.2026", gun: "Cümə axşamı", ay: "Dekabr" },
+  { tarix: "04.12.2026", gun: "Cümə", ay: "Dekabr" },
+  { tarix: "05.12.2026", gun: "Şənbə", ay: "Dekabr" },
+  { tarix: "06.12.2026", gun: "Bazar", ay: "Dekabr" },
+  { tarix: "07.12.2026", gun: "Bazar ertəsi", ay: "Dekabr" },
+  { tarix: "08.12.2026", gun: "Çərşənbə axşamı", ay: "Dekabr" },
+  { tarix: "09.12.2026", gun: "Çərşənbə", ay: "Dekabr" },
+  { tarix: "10.12.2026", gun: "Cümə axşamı", ay: "Dekabr" },
+  { tarix: "11.12.2026", gun: "Cümə", ay: "Dekabr" },
+  { tarix: "12.12.2026", gun: "Şənbə", ay: "Dekabr" },
+  { tarix: "13.12.2026", gun: "Bazar", ay: "Dekabr" },
+  { tarix: "14.12.2026", gun: "Bazar ertəsi", ay: "Dekabr" },
+  { tarix: "15.12.2026", gun: "Çərşənbə axşamı", ay: "Dekabr" },
+  { tarix: "16.12.2026", gun: "Çərşənbə", ay: "Dekabr" },
+  { tarix: "17.12.2026", gun: "Cümə axşamı", ay: "Dekabr" },
+  { tarix: "18.12.2026", gun: "Cümə", ay: "Dekabr" },
+  { tarix: "19.12.2026", gun: "Şənbə", ay: "Dekabr" },
+  { tarix: "20.12.2026", gun: "Bazar", ay: "Dekabr" },
+  { tarix: "21.12.2026", gun: "Bazar ertəsi", ay: "Dekabr" },
+  { tarix: "22.12.2026", gun: "Çərşənbə axşamı", ay: "Dekabr" },
+  { tarix: "23.12.2026", gun: "Çərşənbə", ay: "Dekabr" },
+  { tarix: "24.12.2026", gun: "Cümə axşamı", ay: "Dekabr" },
+  { tarix: "25.12.2026", gun: "Cümə", ay: "Dekabr" },
+  { tarix: "26.12.2026", gun: "Şənbə", ay: "Dekabr" },
+  { tarix: "27.12.2026", gun: "Bazar", ay: "Dekabr" },
+  { tarix: "28.12.2026", gun: "Bazar ertəsi", ay: "Dekabr" },
+  { tarix: "29.12.2026", gun: "Çərşənbə axşamı", ay: "Dekabr" },
+  { tarix: "30.12.2026", gun: "Çərşənbə", ay: "Dekabr" },
+  { tarix: "31.12.2026", gun: "Cümə axşamı", ay: "Dekabr" },
+  { tarix: "01.01.2027", gun: "Cümə", ay: "Yanvar 2027" },
+  { tarix: "02.01.2027", gun: "Şənbə", ay: "Yanvar 2027" },
+  { tarix: "03.01.2027", gun: "Bazar", ay: "Yanvar 2027" },
+  { tarix: "04.01.2027", gun: "Bazar ertəsi", ay: "Yanvar 2027" },
+  { tarix: "05.01.2027", gun: "Çərşənbə axşamı", ay: "Yanvar 2027" },
+  { tarix: "06.01.2027", gun: "Çərşənbə", ay: "Yanvar 2027" },
+  { tarix: "07.01.2027", gun: "Cümə axşamı", ay: "Yanvar 2027" },
+  { tarix: "08.01.2027", gun: "Cümə", ay: "Yanvar 2027" },
+  { tarix: "09.01.2027", gun: "Şənbə", ay: "Yanvar 2027" },
+  { tarix: "10.01.2027", gun: "Bazar", ay: "Yanvar 2027" },
+  { tarix: "11.01.2027", gun: "Bazar ertəsi", ay: "Yanvar 2027" },
+  { tarix: "12.01.2027", gun: "Çərşənbə axşamı", ay: "Yanvar 2027" },
+  { tarix: "13.01.2027", gun: "Çərşənbə", ay: "Yanvar 2027" },
+  { tarix: "14.01.2027", gun: "Cümə axşamı", ay: "Yanvar 2027" },
+  { tarix: "15.01.2027", gun: "Cümə", ay: "Yanvar 2027" },
+  { tarix: "16.01.2027", gun: "Şənbə", ay: "Yanvar 2027" },
+  { tarix: "17.01.2027", gun: "Bazar", ay: "Yanvar 2027" },
+  { tarix: "18.01.2027", gun: "Bazar ertəsi", ay: "Yanvar 2027" },
+  { tarix: "19.01.2027", gun: "Çərşənbə axşamı", ay: "Yanvar 2027" },
+  { tarix: "20.01.2027", gun: "Çərşənbə", ay: "Yanvar 2027" },
+  { tarix: "21.01.2027", gun: "Cümə axşamı", ay: "Yanvar 2027" },
+  { tarix: "22.01.2027", gun: "Cümə", ay: "Yanvar 2027" },
+  { tarix: "23.01.2027", gun: "Şənbə", ay: "Yanvar 2027" },
+  { tarix: "24.01.2027", gun: "Bazar", ay: "Yanvar 2027" },
+  { tarix: "25.01.2027", gun: "Bazar ertəsi", ay: "Yanvar 2027" },
+  { tarix: "26.01.2027", gun: "Çərşənbə axşamı", ay: "Yanvar 2027" },
+  { tarix: "27.01.2027", gun: "Çərşənbə", ay: "Yanvar 2027" },
+  { tarix: "28.01.2027", gun: "Cümə axşamı", ay: "Yanvar 2027" },
+  { tarix: "29.01.2027", gun: "Cümə", ay: "Yanvar 2027" },
+  { tarix: "30.01.2027", gun: "Şənbə", ay: "Yanvar 2027" },
+  { tarix: "31.01.2027", gun: "Bazar", ay: "Yanvar 2027" },
+  { tarix: "01.02.2027", gun: "Bazar ertəsi", ay: "Fevral 2027" },
+  { tarix: "02.02.2027", gun: "Çərşənbə axşamı", ay: "Fevral 2027" },
+  { tarix: "03.02.2027", gun: "Çərşənbə", ay: "Fevral 2027" },
+  { tarix: "04.02.2027", gun: "Cümə axşamı", ay: "Fevral 2027" },
+  { tarix: "05.02.2027", gun: "Cümə", ay: "Fevral 2027" },
+  { tarix: "06.02.2027", gun: "Şənbə", ay: "Fevral 2027" },
+  { tarix: "07.02.2027", gun: "Bazar", ay: "Fevral 2027" },
+  { tarix: "08.02.2027", gun: "Bazar ertəsi", ay: "Fevral 2027" },
+  { tarix: "09.02.2027", gun: "Çərşənbə axşamı", ay: "Fevral 2027" },
+  { tarix: "10.02.2027", gun: "Çərşənbə", ay: "Fevral 2027" },
+  { tarix: "11.02.2027", gun: "Cümə axşamı", ay: "Fevral 2027" },
+  { tarix: "12.02.2027", gun: "Cümə", ay: "Fevral 2027" },
+  { tarix: "13.02.2027", gun: "Şənbə", ay: "Fevral 2027" },
+  { tarix: "14.02.2027", gun: "Bazar", ay: "Fevral 2027" },
+  { tarix: "15.02.2027", gun: "Bazar ertəsi", ay: "Fevral 2027" },
+  { tarix: "16.02.2027", gun: "Çərşənbə axşamı", ay: "Fevral 2027" },
+  { tarix: "17.02.2027", gun: "Çərşənbə", ay: "Fevral 2027" },
+  { tarix: "18.02.2027", gun: "Cümə axşamı", ay: "Fevral 2027" },
+  { tarix: "19.02.2027", gun: "Cümə", ay: "Fevral 2027" },
+  { tarix: "20.02.2027", gun: "Şənbə", ay: "Fevral 2027" },
+  { tarix: "21.02.2027", gun: "Bazar", ay: "Fevral 2027" },
+  { tarix: "22.02.2027", gun: "Bazar ertəsi", ay: "Fevral 2027" },
+  { tarix: "23.02.2027", gun: "Çərşənbə axşamı", ay: "Fevral 2027" },
+  { tarix: "24.02.2027", gun: "Çərşənbə", ay: "Fevral 2027" },
+  { tarix: "25.02.2027", gun: "Cümə axşamı", ay: "Fevral 2027" },
+  { tarix: "26.02.2027", gun: "Cümə", ay: "Fevral 2027" },
+  { tarix: "27.02.2027", gun: "Şənbə", ay: "Fevral 2027" },
+  { tarix: "28.02.2027", gun: "Bazar", ay: "Fevral 2027" },
+  { tarix: "01.03.2027", gun: "Bazar ertəsi", ay: "Mart 2027" },
+  { tarix: "02.03.2027", gun: "Çərşənbə axşamı", ay: "Mart 2027" },
+  { tarix: "03.03.2027", gun: "Çərşənbə", ay: "Mart 2027" },
+  { tarix: "04.03.2027", gun: "Cümə axşamı", ay: "Mart 2027" },
+  { tarix: "05.03.2027", gun: "Cümə", ay: "Mart 2027" },
+  { tarix: "06.03.2027", gun: "Şənbə", ay: "Mart 2027" },
+  { tarix: "07.03.2027", gun: "Bazar", ay: "Mart 2027" },
+  { tarix: "08.03.2027", gun: "Bazar ertəsi", ay: "Mart 2027" },
+  { tarix: "09.03.2027", gun: "Çərşənbə axşamı", ay: "Mart 2027" },
+  { tarix: "10.03.2027", gun: "Çərşənbə", ay: "Mart 2027" },
+  { tarix: "11.03.2027", gun: "Cümə axşamı", ay: "Mart 2027" },
+  { tarix: "12.03.2027", gun: "Cümə", ay: "Mart 2027" },
+  { tarix: "13.03.2027", gun: "Şənbə", ay: "Mart 2027" },
+  { tarix: "14.03.2027", gun: "Bazar", ay: "Mart 2027" },
+  { tarix: "15.03.2027", gun: "Bazar ertəsi", ay: "Mart 2027" },
+  { tarix: "16.03.2027", gun: "Çərşənbə axşamı", ay: "Mart 2027" },
+  { tarix: "17.03.2027", gun: "Çərşənbə", ay: "Mart 2027" },
+  { tarix: "18.03.2027", gun: "Cümə axşamı", ay: "Mart 2027" },
+  { tarix: "19.03.2027", gun: "Cümə", ay: "Mart 2027" },
+  { tarix: "20.03.2027", gun: "Şənbə", ay: "Mart 2027" },
+  { tarix: "21.03.2027", gun: "Bazar", ay: "Mart 2027" },
+  { tarix: "22.03.2027", gun: "Bazar ertəsi", ay: "Mart 2027" },
+  { tarix: "23.03.2027", gun: "Çərşənbə axşamı", ay: "Mart 2027" },
+  { tarix: "24.03.2027", gun: "Çərşənbə", ay: "Mart 2027" },
+  { tarix: "25.03.2027", gun: "Cümə axşamı", ay: "Mart 2027" },
+  { tarix: "26.03.2027", gun: "Cümə", ay: "Mart 2027" },
+  { tarix: "27.03.2027", gun: "Şənbə", ay: "Mart 2027" },
+  { tarix: "28.03.2027", gun: "Bazar", ay: "Mart 2027" },
+  { tarix: "29.03.2027", gun: "Bazar ertəsi", ay: "Mart 2027" },
+  { tarix: "30.03.2027", gun: "Çərşənbə axşamı", ay: "Mart 2027" },
+  { tarix: "31.03.2027", gun: "Çərşənbə", ay: "Mart 2027" },
+  { tarix: "01.04.2027", gun: "Cümə axşamı", ay: "Aprel 2027" },
+  { tarix: "02.04.2027", gun: "Cümə", ay: "Aprel 2027" },
+  { tarix: "03.04.2027", gun: "Şənbə", ay: "Aprel 2027" },
+  { tarix: "04.04.2027", gun: "Bazar", ay: "Aprel 2027" },
+  { tarix: "05.04.2027", gun: "Bazar ertəsi", ay: "Aprel 2027" },
+  { tarix: "06.04.2027", gun: "Çərşənbə axşamı", ay: "Aprel 2027" },
+  { tarix: "07.04.2027", gun: "Çərşənbə", ay: "Aprel 2027" },
+  { tarix: "08.04.2027", gun: "Cümə axşamı", ay: "Aprel 2027" },
+  { tarix: "09.04.2027", gun: "Cümə", ay: "Aprel 2027" },
+  { tarix: "10.04.2027", gun: "Şənbə", ay: "Aprel 2027" },
+  { tarix: "11.04.2027", gun: "Bazar", ay: "Aprel 2027" },
+  { tarix: "12.04.2027", gun: "Bazar ertəsi", ay: "Aprel 2027" },
+  { tarix: "13.04.2027", gun: "Çərşənbə axşamı", ay: "Aprel 2027" },
+  { tarix: "14.04.2027", gun: "Çərşənbə", ay: "Aprel 2027" },
+  { tarix: "15.04.2027", gun: "Cümə axşamı", ay: "Aprel 2027" },
+  { tarix: "16.04.2027", gun: "Cümə", ay: "Aprel 2027" },
+  { tarix: "17.04.2027", gun: "Şənbə", ay: "Aprel 2027" },
+  { tarix: "18.04.2027", gun: "Bazar", ay: "Aprel 2027" },
+  { tarix: "19.04.2027", gun: "Bazar ertəsi", ay: "Aprel 2027" },
+  { tarix: "20.04.2027", gun: "Çərşənbə axşamı", ay: "Aprel 2027" },
+  { tarix: "21.04.2027", gun: "Çərşənbə", ay: "Aprel 2027" },
+  { tarix: "22.04.2027", gun: "Cümə axşamı", ay: "Aprel 2027" },
+  { tarix: "23.04.2027", gun: "Cümə", ay: "Aprel 2027" },
+  { tarix: "24.04.2027", gun: "Şənbə", ay: "Aprel 2027" },
+  { tarix: "25.04.2027", gun: "Bazar", ay: "Aprel 2027" },
+  { tarix: "26.04.2027", gun: "Bazar ertəsi", ay: "Aprel 2027" },
+  { tarix: "27.04.2027", gun: "Çərşənbə axşamı", ay: "Aprel 2027" },
+  { tarix: "28.04.2027", gun: "Çərşənbə", ay: "Aprel 2027" },
+  { tarix: "29.04.2027", gun: "Cümə axşamı", ay: "Aprel 2027" },
+  { tarix: "30.04.2027", gun: "Cümə", ay: "Aprel 2027" },
+  { tarix: "01.05.2027", gun: "Şənbə", ay: "May 2027" },
+  { tarix: "02.05.2027", gun: "Bazar", ay: "May 2027" },
+  { tarix: "03.05.2027", gun: "Bazar ertəsi", ay: "May 2027" },
+  { tarix: "04.05.2027", gun: "Çərşənbə axşamı", ay: "May 2027" },
+  { tarix: "05.05.2027", gun: "Çərşənbə", ay: "May 2027" },
+  { tarix: "06.05.2027", gun: "Cümə axşamı", ay: "May 2027" },
+  { tarix: "07.05.2027", gun: "Cümə", ay: "May 2027" },
+  { tarix: "08.05.2027", gun: "Şənbə", ay: "May 2027" },
+  { tarix: "09.05.2027", gun: "Bazar", ay: "May 2027" },
+  { tarix: "10.05.2027", gun: "Bazar ertəsi", ay: "May 2027" },
+  { tarix: "11.05.2027", gun: "Çərşənbə axşamı", ay: "May 2027" },
+  { tarix: "12.05.2027", gun: "Çərşənbə", ay: "May 2027" },
+  { tarix: "13.05.2027", gun: "Cümə axşamı", ay: "May 2027" },
+  { tarix: "14.05.2027", gun: "Cümə", ay: "May 2027" },
+  { tarix: "15.05.2027", gun: "Şənbə", ay: "May 2027" },
+  { tarix: "16.05.2027", gun: "Bazar", ay: "May 2027" },
+  { tarix: "17.05.2027", gun: "Bazar ertəsi", ay: "May 2027" },
+  { tarix: "18.05.2027", gun: "Çərşənbə axşamı", ay: "May 2027" },
+  { tarix: "19.05.2027", gun: "Çərşənbə", ay: "May 2027" },
+  { tarix: "20.05.2027", gun: "Cümə axşamı", ay: "May 2027" },
+  { tarix: "21.05.2027", gun: "Cümə", ay: "May 2027" },
+  { tarix: "22.05.2027", gun: "Şənbə", ay: "May 2027" },
+  { tarix: "23.05.2027", gun: "Bazar", ay: "May 2027" },
+  { tarix: "24.05.2027", gun: "Bazar ertəsi", ay: "May 2027" },
+  { tarix: "25.05.2027", gun: "Çərşənbə axşamı", ay: "May 2027" },
+  { tarix: "26.05.2027", gun: "Çərşənbə", ay: "May 2027" },
+  { tarix: "27.05.2027", gun: "Cümə axşamı", ay: "May 2027" },
+  { tarix: "28.05.2027", gun: "Cümə", ay: "May 2027" },
+  { tarix: "29.05.2027", gun: "Şənbə", ay: "May 2027" },
+  { tarix: "30.05.2027", gun: "Bazar", ay: "May 2027" },
+  { tarix: "31.05.2027", gun: "Bazar ertəsi", ay: "May 2027" },
+  { tarix: "01.06.2027", gun: "Çərşənbə axşamı", ay: "İyun 2027" },
+  { tarix: "02.06.2027", gun: "Çərşənbə", ay: "İyun 2027" },
+  { tarix: "03.06.2027", gun: "Cümə axşamı", ay: "İyun 2027" },
+  { tarix: "04.06.2027", gun: "Cümə", ay: "İyun 2027" },
+  { tarix: "05.06.2027", gun: "Şənbə", ay: "İyun 2027" },
+  { tarix: "06.06.2027", gun: "Bazar", ay: "İyun 2027" },
+  { tarix: "07.06.2027", gun: "Bazar ertəsi", ay: "İyun 2027" },
+  { tarix: "08.06.2027", gun: "Çərşənbə axşamı", ay: "İyun 2027" },
+  { tarix: "09.06.2027", gun: "Çərşənbə", ay: "İyun 2027" },
+  { tarix: "10.06.2027", gun: "Cümə axşamı", ay: "İyun 2027" },
+  { tarix: "11.06.2027", gun: "Cümə", ay: "İyun 2027" },
+  { tarix: "12.06.2027", gun: "Şənbə", ay: "İyun 2027" },
+  { tarix: "13.06.2027", gun: "Bazar", ay: "İyun 2027" },
+  { tarix: "14.06.2027", gun: "Bazar ertəsi", ay: "İyun 2027" },
+  { tarix: "15.06.2027", gun: "Çərşənbə axşamı", ay: "İyun 2027" },
+  { tarix: "16.06.2027", gun: "Çərşənbə", ay: "İyun 2027" },
+  { tarix: "17.06.2027", gun: "Cümə axşamı", ay: "İyun 2027" },
+];
+
+function genId() { return "h_" + Math.random().toString(36).slice(2, 10); }
+
+function loadLogs() {
+  try {
+    const raw = localStorage.getItem("gymLogs_v2");
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+function saveLogs(logs) {
+  try { localStorage.setItem("gymLogs_v2", JSON.stringify(logs)); } catch (e) {}
+}
+
+function App() {
+  const [darkMode, setDarkMode] = React.useState(() => {
+    const saved = localStorage.getItem("darkMode_v1");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [logs, setLogs] = React.useState(loadLogs());
+  const [activeAy, setActiveAy] = React.useState(() => localStorage.getItem("activeAy_v2") || "İyun");
+  const [selTarix, setSelTarix] = React.useState(null);
+  const [saveStatus, setSaveStatus] = React.useState("idle");
+  const [copyStatus, setCopyStatus] = React.useState("idle");
+  const [backupStatus, setBackupStatus] = React.useState("idle");
+  const [restoreStatus, setRestoreStatus] = React.useState("idle");
+  const fileInputRef = React.useRef(null);
+  const [now, setNow] = React.useState(new Date());
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const GUNLER_AZ_SHORT = ["Bazar","Bazar ertəsi","Çərşənbə axşamı","Çərşənbə","Cümə axşamı","Cümə","Şənbə"];
+  const formatClock = (d) => {
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    const ss = String(d.getSeconds()).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mo = String(d.getMonth()+1).padStart(2,"0");
+    const yy = d.getFullYear();
+    const gun = GUNLER_AZ_SHORT[d.getDay()];
+    return { saat: `${hh}:${mm}:${ss}`, tarix: `${dd}.${mo}.${yy}`, gun };
+  };
+
+  React.useEffect(() => {
+    document.body.className = darkMode ? "dark" : "light";
+  }, [darkMode]);
+
+  const D = darkMode;
+  const colors = {
+    bg: D ? "#0d0d1a" : "#ffffff",
+    card: D ? "#15152a" : "#f7f7fa",
+    card2: D ? "#1a1a35" : "#eeeeee",
+    row1: D ? "#111122" : "#ffffff",
+    rowDone: D ? "#0d2a0d" : "#e8f5e8",
+    rowBorderDone: D ? "#2a5a2a" : "#4caf50",
+    rowBorder: D ? "#1e1e3a" : "#e0e0e0",
+    text: D ? "#e0e0e0" : "#212121",
+    textMuted: D ? "#888" : "#616161",
+    textDone: D ? "#7dff7d" : "#2e7d32",
+    inputBg: D ? "#2a2a4a" : "#ffffff",
+    inputBorder: D ? "#444" : "#bdbdbd",
+    gold: D ? "#FFD700" : "#1565c0",
+    statBg: D ? "#1a1a30" : "#f5f5f5",
+    statBorder: D ? "#333" : "#e0e0e0",
+    ayActive: D ? "#FFD700" : "#1565c0",
+    ayActiveTxt: D ? "#0d0d1a" : "#ffffff",
+    ayBg: D ? "#1a1a30" : "#eeeeee",
+    ayTxt: D ? "#888" : "#424242",
+    ayBorder: D ? "#333" : "#e0e0e0",
+  };
+
+  const getLog = (tarix) => logs[tarix] || { gymGun: null, done: false, muddet: 0, hereketDone: [], note: "" };
+  const updateLog = (tarix, newLog) => {
+    setLogs(prev => {
+      const next = { ...prev, [tarix]: JSON.parse(JSON.stringify(newLog)) };
+      saveLogs(next);
+      return next;
+    });
+  };
+
+  const hasNote = (log) => !!(log.note || log.enerji || log.ruhhal || log.agri);
+
+  const toggleHereket = (tarix, idx) => {
+    const log = getLog(tarix);
+    const hd = log.hereketDone || [];
+    const next = hd.includes(idx) ? hd.filter(x => x !== idx) : [...hd, idx];
+    updateLog(tarix, { ...log, hereketDone: next });
+  };
+
+  const setGymGun = (tarix, gun) => {
+    const log = getLog(tarix);
+    if (log.gymGun !== gun) {
+      const sablon = GYM_HEREKETLERI[gun] || [];
+      const yeniSxem = {};
+      sablon.forEach((h, i) => {
+        yeniSxem[i] = {
+          ad: h.ad,
+          ...(h.adCustom ? { adCustom: h.adCustom } : {}),
+          set: h.set,
+        };
+      });
+      updateLog(tarix, {
+        ...log,
+        gymGun: gun,
+        hereketDone: [],
+        hereketSay: sablon.length || 5,
+        sxem: yeniSxem,
+      });
+    }
+  };
+
+  const handleSave = () => {
+    saveLogs(logs);
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 2000);
+  };
+
+  const handleBackup = () => {
+    const payload = { version: 2, exportedAt: new Date().toISOString(), logs };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dstamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `gym-yedek-${dstamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setBackupStatus("done");
+    setTimeout(() => setBackupStatus("idle"), 2000);
+  };
+
+  const handleRestoreFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const restoredLogs = parsed && parsed.logs ? parsed.logs : parsed;
+        if (!restoredLogs || typeof restoredLogs !== "object") throw new Error("invalid");
+        setLogs(restoredLogs);
+        saveLogs(restoredLogs);
+        setRestoreStatus("done");
+        setTimeout(() => setRestoreStatus("idle"), 2000);
+      } catch (err) {
+        setRestoreStatus("error");
+        setTimeout(() => setRestoreStatus("idle"), 2500);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExport = () => {
+    const doneDays = GUNLER.filter(g => getLog(g.tarix).done);
+    const noteDays = GUNLER.filter(g => {
+      const log = getLog(g.tarix);
+      return !log.done && hasNote(log);
+    });
+    let text = "🏋️ GYM HESABATI\n" + "=".repeat(30) + "\n";
+    doneDays.forEach(g => {
+      const log = getLog(g.tarix);
+      const prog = log.gymGun ? GYM_PROQRAM[log.gymGun] : null;
+      text += `\n📅 ${g.tarix} — ${g.gun} (${prog ? prog.label : "?"}, ${log.muddet || 0} dəq)\n`;
+      if (prog) {
+        const hSay = log.hereketSay || 5;
+        Array.from({ length: hSay }).forEach((_, i) => {
+          const isDone = (log.hereketDone || []).includes(i) ? "✅" : "⬜";
+          const sxemData = (log.sxem && log.sxem[i]) || {};
+          const adVal = sxemData.ad === "Digər" ? (sxemData.adCustom || "Digər") : (sxemData.ad || `Hərəkət ${i + 1}`);
+          const agurluklar = sxemData.agurluklar || [];
+          const tekrarlar = sxemData.tekrarlar || [];
+          const setCount = Number(sxemData.set) || 0;
+          let realSxem = "?×?";
+          if (setCount > 0) {
+            const setStrs = Array.from({ length: setCount }).map((_, si) => {
+              const ag = agurluklar[si] || "?";
+              const tk = tekrarlar[si] || "?";
+              return `${ag}kg×${tk}`;
+            });
+            realSxem = setStrs.join(" | ");
+          } else if (sxemData.set || sxemData.tekrar) {
+            realSxem = `${sxemData.set || "?"}×${sxemData.tekrar || "?"}`;
+          }
+          text += `  ${isDone} ${adVal}: ${realSxem}\n`;
+        });
+      }
+      if (log.enerji || log.ruhhal || log.agri || log.note) {
+        text += `  📊 Dəyərləndirmə:\n`;
+        if (log.enerji) text += `     ⚡ Enerji: ${log.enerji}/5\n`;
+        if (log.ruhhal) text += `     😊 Ruh halı: ${log.ruhhal}\n`;
+        if (log.agri) text += `     💪 Ağrı: ${log.agri}\n`;
+        if (log.note) text += `     📝 ${log.note}\n`;
+      }
+    });
+    if (noteDays.length > 0) {
+      text += "\n" + "=".repeat(30) + "\n📖 DİGƏR QEYDLƏR\n";
+      noteDays.forEach(g => {
+        const log = getLog(g.tarix);
+        text += `\n📅 ${g.tarix} — ${g.gun}\n`;
+        if (log.enerji) text += `   ⚡ Enerji: ${log.enerji}/5\n`;
+        if (log.ruhhal) text += `   😊 Ruh halı: ${log.ruhhal}\n`;
+        if (log.agri) text += `   💪 Ağrı: ${log.agri}\n`;
+        if (log.note) text += `   📝 ${log.note}\n`;
+      });
+    }
+    text += "\n" + "=".repeat(30) + `\nCəmi: ${doneDays.length} gym günü`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2500);
+    }).catch(() => alert(text));
+  };
+
+  const aylar = [...new Set(GUNLER.map(g => g.ay))];
+  const filteredGunler = GUNLER.filter(g => g.ay === activeAy);
+  const totalDone = GUNLER.filter(g => getLog(g.tarix).done).length;
+  const selGun = selTarix ? GUNLER.find(g => g.tarix === selTarix) : null;
+  const selLog = selTarix ? getLog(selTarix) : null;
+  const selProg = selLog && selLog.gymGun ? GYM_PROQRAM[selLog.gymGun] : null;
+
+  return (
+    <div style={{ fontFamily: "Arial, sans-serif", color: colors.text, background: colors.bg, minHeight: "100vh", padding: 14 }}>
+
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: colors.gold }}>🏋️ GYM CƏDVƏLİ</div>
+          <button onClick={() => { const next = !darkMode; setDarkMode(next); localStorage.setItem("darkMode_v1", next); }}
+            style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}`, borderRadius: 20,
+              padding: "4px 10px", cursor: "pointer", fontSize: 14, color: colors.text }}>
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+        </div>
+        <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 3 }}>17 İyun 2026 – 17 İyun 2027</div>
+        <div style={{ marginTop: 8, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+          <div style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}`, borderRadius: 10,
+            padding: "6px 16px", textAlign: "center" }}>
+            <span style={{ fontSize: 22, fontWeight: "bold", color: colors.gold, fontFamily: "monospace", letterSpacing: 2 }}>
+              {formatClock(now).saat}
+            </span>
+            <span style={{ fontSize: 12, color: colors.textMuted, marginLeft: 10 }}>
+              {formatClock(now).tarix} · {formatClock(now).gun}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center", flexWrap: "wrap" }}>
+        {[
+          { label: "Ümumi gym günü", val: totalDone, icon: "✅" },
+          { label: "Sxem", val: "A·B·C", icon: "📅" },
+          { label: "İstirahət", val: "60-90 san", icon: "⏱️" },
+        ].map((s, i) => (
+          <div key={i} style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}`, borderRadius: 10, padding: "7px 14px", textAlign: "center", minWidth: 90 }}>
+            <div style={{ fontSize: 16 }}>{s.icon}</div>
+            <div style={{ color: colors.gold, fontWeight: "bold", fontSize: 15 }}>{s.val}</div>
+            <div style={{ color: colors.textMuted, fontSize: 10 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, justifyContent: "center", flexWrap: "wrap" }}>
+        {aylar.map(ay => (
+          <button key={ay} onClick={() => { setActiveAy(ay); setSelTarix(null); localStorage.setItem("activeAy_v2", ay); }}
+            style={{ padding: "7px 14px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: "bold",
+              background: activeAy === ay ? colors.ayActive : colors.ayBg,
+              color: activeAy === ay ? colors.ayActiveTxt : colors.ayTxt,
+              border: activeAy === ay ? "none" : `1px solid ${colors.ayBorder}` }}>{ay}</button>
+        ))}
+      </div>
+
+      {selTarix && selGun && selLog && (
+        <div style={{ background: colors.card, border: `1px solid ${colors.gold}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div>
+              <div style={{ color: colors.gold, fontWeight: "bold", fontSize: 15 }}>{selTarix}</div>
+              <div style={{ color: colors.textMuted, fontSize: 12 }}>{selGun.gun}</div>
+            </div>
+            <button onClick={() => setSelTarix(null)} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: 22, cursor: "pointer" }}>✕</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" checked={selLog.done || false}
+                onChange={e => updateLog(selTarix, { ...selLog, done: e.target.checked })}
+                style={{ width: 18, height: 18, cursor: "pointer" }} />
+              <span style={{ color: selLog.done ? colors.textDone : colors.textMuted, fontSize: 13, fontWeight: "bold", marginLeft: 4 }}>
+                {selLog.done ? "✅ Tamamlandı" : "⬜ Tamamlanmadı"}
+              </span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+              <span style={{ color: colors.textMuted, fontSize: 12 }}>⏱️</span>
+              <input type="number" min="0" max="180"
+                value={selLog.muddet === 0 ? "" : selLog.muddet}
+                placeholder="0"
+                onFocus={e => e.target.select()}
+                onChange={e => updateLog(selTarix, { ...selLog, muddet: e.target.value === "" ? 0 : Number(e.target.value) })}
+                style={{ width: 55, background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                  color: colors.gold, borderRadius: 6, padding: "4px 8px", fontSize: 13, textAlign: "center" }} />
+              <span style={{ color: colors.textMuted, fontSize: 12 }}>dəq</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 6 }}>Bu gün hansı proqram?</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["A", "B", "C"].map(g => (
+                <button key={g} onClick={() => setGymGun(selTarix, g)}
+                  style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: `1px solid ${selLog.gymGun === g ? GYM_PROQRAM[g].color : colors.inputBorder}`,
+                    cursor: "pointer", fontSize: 13, fontWeight: "bold",
+                    background: selLog.gymGun === g ? GYM_PROQRAM[g].color + "22" : colors.inputBg,
+                    color: selLog.gymGun === g ? GYM_PROQRAM[g].color : colors.textMuted }}>
+                  {GYM_PROQRAM[g].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {selProg && (
+            <div style={{ background: colors.card2, borderRadius: 8, padding: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ color: colors.textMuted, fontSize: 12 }}>Hərəkət sayı:</span>
+                <input type="number" min="1" max="20"
+                  value={selLog.hereketSay || 5}
+                  onFocus={e => e.target.select()}
+                  onChange={e => {
+                    const n = Math.max(1, parseInt(e.target.value) || 1);
+                    updateLog(selTarix, { ...selLog, hereketSay: n, hereketDone: [], sxem: {} });
+                  }}
+                  style={{ width: 52, height: 36, background: colors.inputBg, border: `1px solid ${selProg.color}`,
+                    color: selProg.color, borderRadius: 8, fontSize: 16, textAlign: "center", fontWeight: "bold" }} />
+              </div>
+              {Array.from({ length: selLog.hereketSay || 5 }).map((_, i) => {
+                const isDone = (selLog.hereketDone || []).includes(i);
+                const sxemData = (selLog.sxem && selLog.sxem[i]) || {};
+                const setVal = sxemData.set !== undefined ? sxemData.set : "";
+                const updateSxem = (field, val) => {
+                  const nextSxem = { ...(selLog.sxem || {}) };
+                  nextSxem[i] = { ...(nextSxem[i] || {}), [field]: val };
+                  updateLog(selTarix, { ...selLog, sxem: nextSxem });
+                };
+                return (
+                  <div key={i}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 8px",
+                      borderBottom: i === (selLog.hereketSay||5) - 1 ? "none" : `1px solid ${colors.inputBorder}`,
+                      opacity: isDone ? 0.5 : 1 }}>
+                    <div style={{ minWidth: 22, height: 22, borderRadius: 7, background: GYM_PROQRAM[selLog.gymGun].color + "22",
+                      color: GYM_PROQRAM[selLog.gymGun].color, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: "bold", fontSize: 12, flexShrink: 0, marginTop: 1 }}>
+                      {i + 1}
+                    </div>
+                    <div onClick={() => toggleHereket(selTarix, i)} style={{ cursor: "pointer", marginTop: 1 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 6, border: `1.5px solid ${isDone ? "#4CAF50" : colors.inputBorder}`,
+                        background: isDone ? "#4CAF50" : "transparent", flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center", color: "#0d0d1a", fontSize: 12, fontWeight: "bold" }}>
+                        {isDone ? "✓" : ""}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                        <select value={sxemData.ad || ""}
+                          onChange={e => updateSxem("ad", e.target.value)}
+                          style={{ flex: "1 1 140px", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: D ? colors.gold : "#111111", borderRadius: 6, padding: "5px 8px", fontSize: 12.5,
+                            textDecoration: isDone ? "line-through" : "none" }}>
+                          <option value="" disabled>Hərəkət {i + 1} seç...</option>
+                          {HEREKETLER_SIYAHI.map(x => <option key={x} value={x}>{x}</option>)}
+                        </select>
+                      </div>
+                      {sxemData.ad === "Digər" && (
+                        <input type="text" placeholder="Hərəkət adını yaz..."
+                          value={sxemData.adCustom !== undefined ? sxemData.adCustom : ""}
+                          onFocus={e => e.target.select()}
+                          onChange={e => updateSxem("adCustom", e.target.value)}
+                          style={{ width: "100%", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: colors.text, borderRadius: 6, padding: "5px 8px", fontSize: 12.5, marginBottom: 6,
+                            fontFamily: "inherit" }} />
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, marginBottom: 8 }}>
+                        <input type="number" min="0" placeholder="set say"
+                          value={setVal}
+                          onFocus={e => e.target.select()}
+                          onChange={e => updateSxem("set", e.target.value)}
+                          style={{ width: 52, height: 36, background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: colors.gold, borderRadius: 8, fontSize: 15, textAlign: "center", fontWeight: "bold" }} />
+                        <span style={{ color: colors.textMuted, fontSize: 12 }}>set</span>
+                      </div>
+                      {setVal > 0 && Array.from({ length: Number(setVal) }).map((_, si) => {
+                        const agurluklar = sxemData.agurluklar || [];
+                        const tekrarlar = sxemData.tekrarlar || [];
+                        const agVal = agurluklar[si] !== undefined ? agurluklar[si] : "";
+                        const tkVal = tekrarlar[si] !== undefined ? tekrarlar[si] : "";
+                        const progColor = GYM_PROQRAM[selLog.gymGun].color;
+                        return (
+                          <div key={si} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
+                            <div style={{ minWidth: 24, height: 24, borderRadius: 6,
+                              background: progColor + "22", color: progColor,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontWeight: "bold", fontSize: 11, flexShrink: 0 }}>
+                              {si + 1}
+                            </div>
+                            <input type="number" min="0" placeholder="kg"
+                              value={agVal}
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                const next = [...(sxemData.agurluklar || Array(Number(setVal)).fill(""))];
+                                next[si] = e.target.value;
+                                updateSxem("agurluklar", next);
+                              }}
+                              style={{ width: 62, height: 38, background: colors.inputBg,
+                                border: `1px solid ${colors.inputBorder}`,
+                                color: colors.gold, borderRadius: 8, fontSize: 15,
+                                textAlign: "center", fontWeight: "bold" }} />
+                            <span style={{ color: colors.textMuted, fontSize: 13 }}>kg ×</span>
+                            <input type="number" min="0" placeholder="təkrar"
+                              value={tkVal}
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                const next = [...(sxemData.tekrarlar || Array(Number(setVal)).fill(""))];
+                                next[si] = e.target.value;
+                                updateSxem("tekrarlar", next);
+                              }}
+                              style={{ width: 58, height: 38, background: colors.inputBg,
+                                border: `1px solid ${colors.inputBorder}`,
+                                color: colors.gold, borderRadius: 8, fontSize: 15,
+                                textAlign: "center", fontWeight: "bold" }} />
+                            <span style={{ color: colors.textMuted, fontSize: 11 }}>təkrar</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div style={{ background: D ? "#0d1a2a" : "#e3f2fd", borderRadius: 10, padding: 12, border: `1px solid ${D ? "#1a3a5a" : "#90caf9"}` }}>
+            <div style={{ color: D ? "#5B9BD5" : "#223355", fontWeight: "bold", fontSize: 13, marginBottom: 10 }}>📊 İdman Sonrası Dəyərləndirmə</div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>⚡ Enerji:</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[["1","😩"],["2","😕"],["3","😐"],["4","😊"],["5","🔥"]].map(([n, emoji]) => (
+                  <button key={n} onClick={() => updateLog(selTarix, { ...selLog, enerji: Number(n) })}
+                    style={{ flex: 1, height: 44, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: "bold",
+                      background: selLog.enerji === Number(n) ? "#FFD700" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.enerji === Number(n) ? "#000" : (D ? "#aaa" : "#333") }}>
+                    {emoji}<br/><span style={{fontSize:10}}>{n}/5</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>😊 Ruh halı:</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[["😴","Yorğun"],["😐","Orta"],["🙂","Yaxşı"],["😄","Əla"],["🔥","Möhtəşəm"]].map(([emoji, label]) => (
+                  <button key={label} onClick={() => updateLog(selTarix, { ...selLog, ruhhal: label })}
+                    style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12,
+                      background: selLog.ruhhal === label ? "#5B9BD5" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.ruhhal === label ? "#fff" : (D ? "#aaa" : "#222") }}>
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>💪 Əzələ ağrısı:</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[["✅","Yoxdur"],["⚠️","Az"],["🔴","Çox"]].map(([emoji, label]) => (
+                  <button key={label} onClick={() => updateLog(selTarix, { ...selLog, agri: label })}
+                    style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12,
+                      background: selLog.agri === label ? "#5B9BD5" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.agri === label ? "#fff" : (D ? "#aaa" : "#222") }}>
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>📝 Qeyd (ağrı, enerji, hiss):</div>
+              <textarea
+                value={selLog.note || ""}
+                onChange={e => updateLog(selTarix, { ...selLog, note: e.target.value })}
+                placeholder="Məs: sol dirsəkdə yüngül ağrı, enerji yaxşı idi..."
+                rows={3}
+                style={{ width: "100%", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                  color: colors.text, borderRadius: 8, padding: "10px", fontSize: 13, resize: "none", outline: "none",
+                  fontFamily: "Arial, sans-serif", lineHeight: 1.6 }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {filteredGunler.map((g) => {
+          const log = getLog(g.tarix);
+          const done = log.done;
+          const note = hasNote(log);
+          const isSel = selTarix === g.tarix;
+          const progColor = log.gymGun ? GYM_PROQRAM[log.gymGun].color : null;
+          return (
+            <div key={g.tarix} onClick={() => setSelTarix(isSel ? null : g.tarix)}
+              style={{
+                background: isSel ? (D ? "#1e1e40" : "#dde8f5") : done ? colors.rowDone : colors.row1,
+                border: `1px solid ${isSel ? colors.gold : done ? colors.rowBorderDone : colors.rowBorder}`,
+                borderRadius: 8, padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10
+              }}>
+              <div style={{ fontSize: 18, minWidth: 24, textAlign: "center" }}>
+                {done ? "✅" : note ? "📝" : "⬜"}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ color: colors.textMuted, fontSize: 11 }}>{g.tarix}</span>
+                  <span style={{ color: done ? colors.textDone : colors.text, fontSize: 13, fontWeight: "bold" }}>{g.gun}</span>
+                  {log.gymGun && (
+                    <span style={{ fontSize: 10, fontWeight: "bold", color: progColor, background: progColor + "22",
+                      padding: "2px 7px", borderRadius: 10 }}>{GYM_PROQRAM[log.gymGun].label}</span>
+                  )}
+                  {log.muddet > 0 && (
+                    <span style={{ fontSize: 10, color: colors.textMuted }}>⏱️ {log.muddet} dəq</span>
+                  )}
+                </div>
+              </div>
+              <div style={{ color: colors.textMuted, fontSize: 16 }}>›</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20, paddingBottom: 20, flexWrap: "wrap" }}>
+        <button onClick={handleSave}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, border: "none", cursor: "pointer",
+            background: saveStatus === "saved" ? "#4CAF50" : (D ? colors.gold : "#1565c0"),
+            color: "#ffffff" }}>
+          {saveStatus === "saved" ? "✅ Saxlanıldı!" : "💾 Saxla"}
+        </button>
+        <button onClick={handleExport}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: copyStatus === "copied" ? "#5B9BD5" : colors.statBg,
+            color: copyStatus === "copied" ? "#fff" : "#5B9BD5",
+            border: "1px solid #5B9BD5" }}>
+          {copyStatus === "copied" ? "✅ Kopyalandı!" : "📋 Kloda paylaş"}
+        </button>
+        <button onClick={handleBackup}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: backupStatus === "done" ? "#2e7d32" : "transparent",
+            color: backupStatus === "done" ? "#fff" : "#4CAF50",
+            border: "1px solid #4CAF50" }}>
+          {backupStatus === "done" ? "✅ Yedəkləndi!" : "💾 Yedəklə"}
+        </button>
+        <button onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: restoreStatus === "done" ? "#e65100" : "transparent",
+            color: restoreStatus === "done" ? "#fff" : "#FF9800",
+            border: `1px solid ${restoreStatus === "error" ? "#f44336" : "#FF9800"}` }}>
+          {restoreStatus === "done" ? "✅ Bərpa olundu!" : restoreStatus === "error" ? "⚠ Səhv fayl" : "📂 Bərpa et"}
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/json"
+          onChange={e => { handleRestoreFile(e.target.files[0]); e.target.value = ""; }}
+          style={{ display: "none" }} />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

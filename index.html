@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Cədvəli & Günlük</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+input, select, textarea { outline: none; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a1a30; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+body.light { background: #ffffff; }
+body.dark { background: #0d0d1a; }
+</style>
+</head>
+<body class="dark">
+<div id="root"></div>
+<script type="text/babel">
+
+const HEREKETLER_SIYAHI = [
+  "Flat Bench Press",
+  "Incline Bench Press",
+  "Pec Deck (Butterfly)",
+  "Cable Crossover",
+  "Dumbbell Fly",
+  "Lat Pulldown",
+  "Pull-Up",
+  "Dips",
+  "Seated Cable Row",
+  "Plate-Loaded Row",
+  "Hyperextension",
+  "Shoulder Press",
+  "Lateral Raise",
+  "Front Raise",
+  "Rear Delt Fly",
+  "Rear Delt Fly (Band)",
+  "Barbell Curl",
+  "Hammer Curl",
+  "Triceps Pushdown",
+  "Digər"
+];
+
+const GYM_PROQRAM = {
+  A: { label: "Gün A", color: "#f97316" },
+  B: { label: "Gün B", color: "#06b6d4" },
+  C: { label: "Gün C", color: "#a855f7" },
+};
+
+// Hər gün üçün standart hərəkət şablonu (ad + hədəf set sayı)
+const GYM_HEREKETLERI = {
+  A: [
+    { ad: "Flat Bench Press", set: 5 },
+    { ad: "Pull-Up", set: 5 },
+    { ad: "Shoulder Press", set: 5 },
+    { ad: "Seated Cable Row", set: 5 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+  B: [
+    { ad: "Incline Bench Press", set: 5 },
+    { ad: "Seated Cable Row", set: 5 },
+    { ad: "Rear Delt Fly (Band)", set: 5 },
+    { ad: "Hammer Curl", set: 5 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+  C: [
+    { ad: "Pull-Up", set: 5 },
+    { ad: "Dips", set: 5 },
+    { ad: "Triceps Pushdown", set: 5 },
+    { ad: "Dumbbell Fly", set: 4 },
+    { ad: "Hyperextension", set: 3 },
+  ],
+};
+
+// Günlər avtomatik yaradılır: başlanğıc və son tarixi dəyişmək kifayətdir
+const AY_ADLARI = ["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+const HEFTE_GUNLERI = ["Bazar","Bazar ertəsi","Çərşənbə axşamı","Çərşənbə","Cümə axşamı","Cümə","Şənbə"];
+const BASLANGIC = new Date(2026, 5, 17);   // 17.06.2026
+const SON_TARIX = new Date(2027, 8, 30);   // 30.09.2027
+const GUNLER = (() => {
+  const arr = [];
+  const d = new Date(BASLANGIC);
+  while (d <= SON_TARIX) {
+    const y = d.getFullYear();
+    arr.push({
+      tarix: `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${y}`,
+      gun: HEFTE_GUNLERI[d.getDay()],
+      ay: y === 2026 ? AY_ADLARI[d.getMonth()] : `${AY_ADLARI[d.getMonth()]} ${y}`,
+    });
+    d.setDate(d.getDate() + 1);
+  }
+  return arr;
+})();
+
+function genId() { return "h_" + Math.random().toString(36).slice(2, 10); }
+
+function loadLogs() {
+  try {
+    const raw = localStorage.getItem("gymLogs_v2");
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+function saveLogs(logs) {
+  try { localStorage.setItem("gymLogs_v2", JSON.stringify(logs)); } catch (e) {}
+}
+
+function App() {
+  const [darkMode, setDarkMode] = React.useState(() => {
+    const saved = localStorage.getItem("darkMode_v1");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [logs, setLogs] = React.useState(loadLogs);
+  const [activeAy, setActiveAy] = React.useState(() => {
+    const aylarHamisi = [...new Set(GUNLER.map(g => g.ay))];
+    const saved = localStorage.getItem("activeAy_v2");
+    if (saved && aylarHamisi.includes(saved)) return saved;
+    const d = new Date();
+    const bt = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
+    const bg = GUNLER.find(g => g.tarix === bt);
+    return bg ? bg.ay : aylarHamisi[0];
+  });
+  const [gorunus, setGorunus] = React.useState(() => localStorage.getItem("gymGorunus_v1") || "teqvim");
+  const panelRef = React.useRef(null);
+  const [selTarix, setSelTarix] = React.useState(null);
+  const [saveStatus, setSaveStatus] = React.useState("idle");
+  const [copyStatus, setCopyStatus] = React.useState("idle");
+  const [backupStatus, setBackupStatus] = React.useState("idle");
+  const [restoreStatus, setRestoreStatus] = React.useState("idle");
+  const fileInputRef = React.useRef(null);
+  const [now, setNow] = React.useState(new Date());
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const GUNLER_AZ_SHORT = ["Bazar","Bazar ertəsi","Çərşənbə axşamı","Çərşənbə","Cümə axşamı","Cümə","Şənbə"];
+  const formatClock = (d) => {
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    const ss = String(d.getSeconds()).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mo = String(d.getMonth()+1).padStart(2,"0");
+    const yy = d.getFullYear();
+    const gun = GUNLER_AZ_SHORT[d.getDay()];
+    return { saat: `${hh}:${mm}:${ss}`, tarix: `${dd}.${mo}.${yy}`, gun };
+  };
+
+  React.useEffect(() => {
+    document.body.className = darkMode ? "dark" : "light";
+  }, [darkMode]);
+
+  // Gün seçiləndə açılan kart ekranın yuxarısına gəlsin
+  React.useEffect(() => {
+    if (selTarix && panelRef.current) panelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selTarix]);
+
+  const saat = formatClock(now);
+  const bugunTarix = saat.tarix;
+  const bugunGun = GUNLER.find(g => g.tarix === bugunTarix);
+  const gedBugune = () => {
+    if (!bugunGun) return;
+    setActiveAy(bugunGun.ay);
+    localStorage.setItem("activeAy_v2", bugunGun.ay);
+    setSelTarix(bugunTarix);
+  };
+
+  const D = darkMode;
+  const colors = {
+    bg: D ? "#0d0d1a" : "#ffffff",
+    card: D ? "#15152a" : "#f7f7fa",
+    card2: D ? "#1a1a35" : "#eeeeee",
+    row1: D ? "#111122" : "#ffffff",
+    rowDone: D ? "#0d2a0d" : "#e8f5e8",
+    rowBorderDone: D ? "#2a5a2a" : "#4caf50",
+    rowBorder: D ? "#1e1e3a" : "#e0e0e0",
+    text: D ? "#e0e0e0" : "#212121",
+    textMuted: D ? "#888" : "#616161",
+    textDone: D ? "#7dff7d" : "#2e7d32",
+    inputBg: D ? "#2a2a4a" : "#ffffff",
+    inputBorder: D ? "#444" : "#bdbdbd",
+    gold: D ? "#FFD700" : "#1565c0",
+    statBg: D ? "#1a1a30" : "#f5f5f5",
+    statBorder: D ? "#333" : "#e0e0e0",
+    ayActive: D ? "#FFD700" : "#1565c0",
+    ayActiveTxt: D ? "#0d0d1a" : "#ffffff",
+    ayBg: D ? "#1a1a30" : "#eeeeee",
+    ayTxt: D ? "#888" : "#424242",
+    ayBorder: D ? "#333" : "#e0e0e0",
+  };
+
+  const getLog = (tarix) => logs[tarix] || { gymGun: null, done: false, muddet: 0, hereketDone: [], note: "" };
+  const updateLog = (tarix, newLog) => {
+    setLogs(prev => {
+      const next = { ...prev, [tarix]: JSON.parse(JSON.stringify(newLog)) };
+      saveLogs(next);
+      return next;
+    });
+  };
+
+  const hasNote = (log) => !!(log.note || log.enerji || log.ruhhal || log.agri);
+
+  const toggleHereket = (tarix, idx) => {
+    const log = getLog(tarix);
+    const hd = log.hereketDone || [];
+    const next = hd.includes(idx) ? hd.filter(x => x !== idx) : [...hd, idx];
+    const say = log.hereketSay || 5;
+    const hamisi = Array.from({ length: say }).every((_, i) => next.includes(i));
+    // Bütün hərəkətlər işarələnəndə gün avtomatik "Tamamlandı" olur
+    updateLog(tarix, { ...log, hereketDone: next, done: hamisi ? true : log.done });
+  };
+
+  const setGymGun = (tarix, gun) => {
+    const log = getLog(tarix);
+    if (log.gymGun !== gun) {
+      const doluDurur = log.gymGun && Object.values(log.sxem || {}).some(h =>
+        (h.agurluklar || []).some(v => v !== "" && v != null) || (h.tekrarlar || []).some(v => v !== "" && v != null));
+      if (doluDurur && !confirm(`${GYM_PROQRAM[log.gymGun].label} üçün yazdığın çəkilər silinəcək və ${GYM_PROQRAM[gun].label} şablonu yüklənəcək. Davam edim?`)) return;
+      const sablon = GYM_HEREKETLERI[gun] || [];
+      const yeniSxem = {};
+      sablon.forEach((h, i) => {
+        yeniSxem[i] = {
+          ad: h.ad,
+          ...(h.adCustom ? { adCustom: h.adCustom } : {}),
+          set: h.set,
+        };
+      });
+      updateLog(tarix, {
+        ...log,
+        gymGun: gun,
+        hereketDone: [],
+        hereketSay: sablon.length || 5,
+        sxem: yeniSxem,
+      });
+    }
+  };
+
+  const handleSave = () => {
+    saveLogs(logs);
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 2000);
+  };
+
+  const handleBackup = () => {
+    const payload = { version: 2, exportedAt: new Date().toISOString(), logs };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dstamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `gym-yedek-${dstamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setBackupStatus("done");
+    setTimeout(() => setBackupStatus("idle"), 2000);
+  };
+
+  const handleRestoreFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const restoredLogs = parsed && parsed.logs ? parsed.logs : parsed;
+        if (!restoredLogs || typeof restoredLogs !== "object" || Array.isArray(restoredLogs)) throw new Error("invalid");
+        if (!confirm("Yedəkdəki məlumatlar hazırkıların yerinə yazılacaq. Davam edim?")) return;
+        setLogs(restoredLogs);
+        saveLogs(restoredLogs);
+        setRestoreStatus("done");
+        setTimeout(() => setRestoreStatus("idle"), 2000);
+      } catch (err) {
+        setRestoreStatus("error");
+        setTimeout(() => setRestoreStatus("idle"), 2500);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExport = () => {
+    const doneDays = GUNLER.filter(g => getLog(g.tarix).done);
+    const noteDays = GUNLER.filter(g => {
+      const log = getLog(g.tarix);
+      return !log.done && hasNote(log);
+    });
+    let text = "🏋️ GYM HESABATI\n" + "=".repeat(30) + "\n";
+    doneDays.forEach(g => {
+      const log = getLog(g.tarix);
+      const prog = log.gymGun ? GYM_PROQRAM[log.gymGun] : null;
+      text += `\n📅 ${g.tarix} — ${g.gun} (${prog ? prog.label : "?"}, ${log.muddet || 0} dəq)\n`;
+      if (prog) {
+        const hSay = log.hereketSay || 5;
+        Array.from({ length: hSay }).forEach((_, i) => {
+          const isDone = (log.hereketDone || []).includes(i) ? "✅" : "⬜";
+          const sxemData = (log.sxem && log.sxem[i]) || {};
+          const adVal = sxemData.ad === "Digər" ? (sxemData.adCustom || "Digər") : (sxemData.ad || `Hərəkət ${i + 1}`);
+          const agurluklar = sxemData.agurluklar || [];
+          const tekrarlar = sxemData.tekrarlar || [];
+          const setCount = Number(sxemData.set) || 0;
+          let realSxem = "?×?";
+          if (setCount > 0) {
+            const setStrs = Array.from({ length: setCount }).map((_, si) => {
+              const ag = agurluklar[si] || "?";
+              const tk = tekrarlar[si] || "?";
+              return `${ag}kg×${tk}`;
+            });
+            realSxem = setStrs.join(" | ");
+          } else if (sxemData.set || sxemData.tekrar) {
+            realSxem = `${sxemData.set || "?"}×${sxemData.tekrar || "?"}`;
+          }
+          text += `  ${isDone} ${adVal}: ${realSxem}\n`;
+        });
+      }
+      if (log.enerji || log.ruhhal || log.agri || log.note) {
+        text += `  📊 Dəyərləndirmə:\n`;
+        if (log.enerji) text += `     ⚡ Enerji: ${log.enerji}/5\n`;
+        if (log.ruhhal) text += `     😊 Ruh halı: ${log.ruhhal}\n`;
+        if (log.agri) text += `     💪 Ağrı: ${log.agri}\n`;
+        if (log.note) text += `     📝 ${log.note}\n`;
+      }
+    });
+    if (noteDays.length > 0) {
+      text += "\n" + "=".repeat(30) + "\n📖 DİGƏR QEYDLƏR\n";
+      noteDays.forEach(g => {
+        const log = getLog(g.tarix);
+        text += `\n📅 ${g.tarix} — ${g.gun}\n`;
+        if (log.enerji) text += `   ⚡ Enerji: ${log.enerji}/5\n`;
+        if (log.ruhhal) text += `   😊 Ruh halı: ${log.ruhhal}\n`;
+        if (log.agri) text += `   💪 Ağrı: ${log.agri}\n`;
+        if (log.note) text += `   📝 ${log.note}\n`;
+      });
+    }
+    text += "\n" + "=".repeat(30) + `\nCəmi: ${doneDays.length} gym günü`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2500);
+    }).catch(() => alert(text));
+  };
+
+  const aylar = [...new Set(GUNLER.map(g => g.ay))];
+  const filteredGunler = GUNLER.filter(g => g.ay === activeAy);
+  const totalDone = GUNLER.filter(g => getLog(g.tarix).done).length;
+  const selGun = selTarix ? GUNLER.find(g => g.tarix === selTarix) : null;
+  const selLog = selTarix ? getLog(selTarix) : null;
+  const selProg = selLog && selLog.gymGun ? GYM_PROQRAM[selLog.gymGun] : null;
+  const buAyDone = filteredGunler.filter(g => getLog(g.tarix).done).length;
+
+  // Eyni hərəkətin əvvəlki nəticəsi (progres üçün)
+  const hereketAdi = (h) => h && h.ad === "Digər" ? (h.adCustom || "").trim().toLowerCase() : (h && h.ad) || "";
+  const evvelkiNetice = (tarix, h) => {
+    const ad = hereketAdi(h);
+    if (!ad) return null;
+    const idx = GUNLER.findIndex(g => g.tarix === tarix);
+    for (let j = idx - 1; j >= 0; j--) {
+      const l = logs[GUNLER[j].tarix];
+      if (!l || !l.sxem) continue;
+      const say = l.hereketSay || 5;
+      for (const k of Object.keys(l.sxem)) {
+        if (Number(k) >= say) continue;
+        const x = l.sxem[k];
+        if (hereketAdi(x) !== ad) continue;
+        const n = Number(x.set) || 0;
+        const ag = x.agurluklar || [], tk = x.tekrarlar || [];
+        const parts = [];
+        for (let si = 0; si < n; si++) {
+          if ((ag[si] ?? "") === "" && (tk[si] ?? "") === "") continue;
+          parts.push(`${ag[si] || "?"}×${tk[si] || "?"}`);
+        }
+        if (parts.length) return { tarix: GUNLER[j].tarix, text: parts.join(" · ") };
+      }
+    }
+    return null;
+  };
+
+  // Növbəti proqram: A → B → C → A
+  const novbetiProqram = (tarix) => {
+    const idx = GUNLER.findIndex(g => g.tarix === tarix);
+    for (let j = idx - 1; j >= 0; j--) {
+      const l = logs[GUNLER[j].tarix];
+      if (l && l.gymGun) return { A: "B", B: "C", C: "A" }[l.gymGun];
+    }
+    return "A";
+  };
+
+  // İstirahət taymeri
+  const [restEnd, setRestEnd] = React.useState(null);
+  const restQalan = restEnd ? Math.max(0, Math.ceil((restEnd - now.getTime()) / 1000)) : null;
+  React.useEffect(() => {
+    if (restEnd && restQalan === 0) {
+      try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
+    }
+  }, [restQalan === 0]);
+
+  return (
+    <div style={{ fontFamily: "Arial, sans-serif", color: colors.text, background: colors.bg, minHeight: "100vh", padding: 14, paddingBottom: restEnd ? 90 : 14 }}>
+
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: colors.gold }}>🏋️ GYM CƏDVƏLİ</div>
+          <button onClick={() => { const next = !darkMode; setDarkMode(next); localStorage.setItem("darkMode_v1", next); }}
+            style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}`, borderRadius: 20,
+              padding: "4px 10px", cursor: "pointer", fontSize: 14, color: colors.text }}>
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+        </div>
+        <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 3 }}>17 İyun 2026 – 30 Sentyabr 2027</div>
+        <div style={{ margin: "12px auto 0", maxWidth: 380, background: colors.statBg, border: `1px solid ${colors.statBorder}`,
+          borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 26, fontWeight: "bold", color: colors.gold, fontVariantNumeric: "tabular-nums", letterSpacing: 1, lineHeight: 1.1 }}>{saat.saat}</div>
+            <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 3 }}>📅 {saat.tarix} · {saat.gun}</div>
+          </div>
+          {bugunGun && (
+            <button onClick={gedBugune}
+              style={{ background: colors.gold, color: colors.ayActiveTxt, border: "none", borderRadius: 18,
+                padding: "8px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Bu günə keç</button>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 14, maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
+        {[
+          { label: "Ümumi gym günü", val: totalDone, icon: "✅" },
+          { label: activeAy.replace(" 2027", "") + " ayında", val: buAyDone, icon: "📆" },
+          { label: "Sxem", val: "A·B·C", icon: "📅" },
+          { label: "İstirahət", val: "60-90 san", icon: "⏱️" },
+        ].map((s, i) => (
+          <div key={i} style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}`, borderRadius: 10, padding: "7px 4px", textAlign: "center", minWidth: 0 }}>
+            <div style={{ fontSize: 16 }}>{s.icon}</div>
+            <div style={{ color: colors.gold, fontWeight: "bold", fontSize: 14, whiteSpace: "nowrap" }}>{s.val}</div>
+            <div style={{ color: colors.textMuted, fontSize: 10 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {[["2026", aylar.filter(a => !a.includes("2027"))], ["2027", aylar.filter(a => a.includes("2027"))]].map(([il, ilAylari]) => (
+        <div key={il} style={{ maxWidth: 480, margin: "0 auto 10px" }}>
+          <div style={{ color: colors.textMuted, fontSize: 11, fontWeight: "bold", marginBottom: 5 }}>{il}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+            {ilAylari.map(ay => (
+              <button key={ay} onClick={() => { setActiveAy(ay); setSelTarix(null); localStorage.setItem("activeAy_v2", ay); }}
+                style={{ padding: "7px 4px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: "bold",
+                  background: activeAy === ay ? colors.ayActive : colors.ayBg,
+                  color: activeAy === ay ? colors.ayActiveTxt : colors.ayTxt,
+                  border: activeAy === ay ? "none" : `1px solid ${colors.ayBorder}`,
+                  outline: bugunGun && bugunGun.ay === ay && activeAy !== ay ? `1px solid ${colors.gold}` : "none" }}>{ay.replace(" 2027", "")}</button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, margin: "6px 0 14px" }}>
+        {[["teqvim","📅 Təqvim"],["siyahi","☰ Siyahı"]].map(([k, label]) => (
+          <button key={k} onClick={() => { setGorunus(k); localStorage.setItem("gymGorunus_v1", k); }}
+            style={{ padding: "6px 16px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: "bold",
+              background: gorunus === k ? colors.card2 : "transparent",
+              color: gorunus === k ? colors.gold : colors.textMuted,
+              border: `1px solid ${gorunus === k ? colors.gold : colors.ayBorder}` }}>{label}</button>
+        ))}
+      </div>
+
+      {selTarix && selGun && selLog && (
+        <div ref={panelRef} style={{ scrollMarginTop: 10, background: colors.card, border: `1px solid ${colors.gold}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div>
+              <div style={{ color: colors.gold, fontWeight: "bold", fontSize: 15 }}>{selTarix}</div>
+              <div style={{ color: colors.textMuted, fontSize: 12 }}>{selGun.gun}</div>
+            </div>
+            <button onClick={() => setSelTarix(null)} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: 22, cursor: "pointer" }}>✕</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" checked={selLog.done || false}
+                onChange={e => updateLog(selTarix, { ...selLog, done: e.target.checked })}
+                style={{ width: 18, height: 18, cursor: "pointer" }} />
+              <span style={{ color: selLog.done ? colors.textDone : colors.textMuted, fontSize: 13, fontWeight: "bold", marginLeft: 4 }}>
+                {selLog.done ? "✅ Tamamlandı" : "⬜ Tamamlanmadı"}
+              </span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+              <span style={{ color: colors.textMuted, fontSize: 12 }}>⏱️</span>
+              <input type="number" min="0" max="180"
+                value={selLog.muddet === 0 ? "" : selLog.muddet}
+                placeholder="0"
+                onFocus={e => e.target.select()}
+                onChange={e => updateLog(selTarix, { ...selLog, muddet: e.target.value === "" ? 0 : Number(e.target.value) })}
+                style={{ width: 55, background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                  color: colors.gold, borderRadius: 6, padding: "4px 8px", fontSize: 13, textAlign: "center" }} />
+              <span style={{ color: colors.textMuted, fontSize: 12 }}>dəq</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 6 }}>
+              Bu gün hansı proqram?
+              {!selLog.gymGun && <span style={{ color: GYM_PROQRAM[novbetiProqram(selTarix)].color, fontWeight: "bold" }}> · Növbəti: {GYM_PROQRAM[novbetiProqram(selTarix)].label}</span>}
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["A", "B", "C"].map(g => (
+                <button key={g} onClick={() => setGymGun(selTarix, g)}
+                  style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: `1px solid ${selLog.gymGun === g ? GYM_PROQRAM[g].color : colors.inputBorder}`,
+                    cursor: "pointer", fontSize: 13, fontWeight: "bold",
+                    background: selLog.gymGun === g ? GYM_PROQRAM[g].color + "22" : colors.inputBg,
+                    color: selLog.gymGun === g ? GYM_PROQRAM[g].color : colors.textMuted }}>
+                  {GYM_PROQRAM[g].label}{!selLog.gymGun && novbetiProqram(selTarix) === g ? " ★" : ""}
+                </button>
+              ))}
+            </div>
+            {selLog.gymGun && (
+              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
+                <span style={{ color: colors.textMuted, fontSize: 12 }}>⏱️ İstirahət:</span>
+                {[60, 90, 120].map(sn => (
+                  <button key={sn} onClick={() => setRestEnd(Date.now() + sn * 1000)}
+                    style={{ padding: "6px 12px", borderRadius: 16, cursor: "pointer", fontSize: 12, fontWeight: "bold",
+                      background: colors.inputBg, color: colors.gold, border: `1px solid ${colors.inputBorder}` }}>{sn} san</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selProg && (
+            <div style={{ background: colors.card2, borderRadius: 8, padding: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ color: colors.textMuted, fontSize: 12 }}>Hərəkət sayı:</span>
+                <input type="number" min="1" max="20"
+                  value={selLog.hereketSay || 5}
+                  onFocus={e => e.target.select()}
+                  onChange={e => {
+                    if (e.target.value === "") return;   // silərkən heç nə itməsin
+                    const n = Math.min(20, Math.max(1, parseInt(e.target.value) || 1));
+                    // Yazılmış hərəkətlər silinmir: sayı azaldıb yenidən artıranda geri gəlir
+                    updateLog(selTarix, { ...selLog, hereketSay: n });
+                  }}
+                  style={{ width: 52, height: 36, background: colors.inputBg, border: `1px solid ${selProg.color}`,
+                    color: selProg.color, borderRadius: 8, fontSize: 16, textAlign: "center", fontWeight: "bold" }} />
+              </div>
+              {Array.from({ length: selLog.hereketSay || 5 }).map((_, i) => {
+                const isDone = (selLog.hereketDone || []).includes(i);
+                const sxemData = (selLog.sxem && selLog.sxem[i]) || {};
+                const setVal = sxemData.set !== undefined ? sxemData.set : "";
+                const updateSxem = (field, val) => {
+                  const nextSxem = { ...(selLog.sxem || {}) };
+                  nextSxem[i] = { ...(nextSxem[i] || {}), [field]: val };
+                  updateLog(selTarix, { ...selLog, sxem: nextSxem });
+                };
+                return (
+                  <div key={i}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 8px",
+                      borderBottom: i === (selLog.hereketSay||5) - 1 ? "none" : `1px solid ${colors.inputBorder}`,
+                      opacity: isDone ? 0.6 : 1 }}>
+                    <div style={{ minWidth: 22, height: 22, borderRadius: 7, background: GYM_PROQRAM[selLog.gymGun].color + "22",
+                      color: GYM_PROQRAM[selLog.gymGun].color, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: "bold", fontSize: 12, flexShrink: 0, marginTop: 1 }}>
+                      {i + 1}
+                    </div>
+                    <div onClick={() => toggleHereket(selTarix, i)} style={{ cursor: "pointer", marginTop: 1 }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 7, border: `1.5px solid ${isDone ? "#4CAF50" : colors.inputBorder}`,
+                        background: isDone ? "#4CAF50" : "transparent", flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center", color: "#0d0d1a", fontSize: 12, fontWeight: "bold" }}>
+                        {isDone ? "✓" : ""}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                        <select value={sxemData.ad || ""}
+                          onChange={e => updateSxem("ad", e.target.value)}
+                          style={{ flex: "1 1 140px", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: D ? colors.gold : "#111111", borderRadius: 6, padding: "5px 8px", fontSize: 12.5,
+                            textDecoration: isDone ? "line-through" : "none" }}>
+                          <option value="" disabled>Hərəkət {i + 1} seç...</option>
+                          {HEREKETLER_SIYAHI.map(x => <option key={x} value={x}>{x}</option>)}
+                        </select>
+                      </div>
+                      {sxemData.ad === "Digər" && (
+                        <input type="text" placeholder="Hərəkət adını yaz..."
+                          value={sxemData.adCustom !== undefined ? sxemData.adCustom : ""}
+                          onFocus={e => e.target.select()}
+                          onChange={e => updateSxem("adCustom", e.target.value)}
+                          style={{ width: "100%", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: colors.text, borderRadius: 6, padding: "5px 8px", fontSize: 12.5, marginBottom: 6,
+                            fontFamily: "inherit" }} />
+                      )}
+                      {(() => {
+                        const ev = evvelkiNetice(selTarix, sxemData);
+                        return ev ? (
+                          <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                            ↩ Əvvəlki ({ev.tarix.slice(0, 5)}): <span style={{ color: colors.gold, fontWeight: "bold" }}>{ev.text}</span>
+                          </div>
+                        ) : null;
+                      })()}
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, marginBottom: 8 }}>
+                        <input type="number" min="0" placeholder="0"
+                          value={setVal}
+                          onFocus={e => e.target.select()}
+                          onChange={e => updateSxem("set", e.target.value)}
+                          style={{ width: 52, height: 36, background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                            color: colors.gold, borderRadius: 8, fontSize: 15, textAlign: "center", fontWeight: "bold" }} />
+                        <span style={{ color: colors.textMuted, fontSize: 12 }}>set</span>
+                      </div>
+                      {setVal > 0 && Array.from({ length: Number(setVal) }).map((_, si) => {
+                        const agurluklar = sxemData.agurluklar || [];
+                        const tekrarlar = sxemData.tekrarlar || [];
+                        const agVal = agurluklar[si] !== undefined ? agurluklar[si] : "";
+                        const tkVal = tekrarlar[si] !== undefined ? tekrarlar[si] : "";
+                        const progColor = GYM_PROQRAM[selLog.gymGun].color;
+                        return (
+                          <div key={si} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
+                            <div style={{ minWidth: 24, height: 24, borderRadius: 6,
+                              background: progColor + "22", color: progColor,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontWeight: "bold", fontSize: 11, flexShrink: 0 }}>
+                              {si + 1}
+                            </div>
+                            <input type="number" min="0" step="0.5" inputMode="decimal" placeholder="kg"
+                              value={agVal}
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                const next = [...(sxemData.agurluklar || Array(Number(setVal)).fill(""))];
+                                next[si] = e.target.value;
+                                updateSxem("agurluklar", next);
+                              }}
+                              style={{ width: 62, height: 38, background: colors.inputBg,
+                                border: `1px solid ${colors.inputBorder}`,
+                                color: colors.gold, borderRadius: 8, fontSize: 15,
+                                textAlign: "center", fontWeight: "bold" }} />
+                            <span style={{ color: colors.textMuted, fontSize: 13 }}>kg ×</span>
+                            <input type="number" min="0" placeholder="0"
+                              value={tkVal}
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                const next = [...(sxemData.tekrarlar || Array(Number(setVal)).fill(""))];
+                                next[si] = e.target.value;
+                                updateSxem("tekrarlar", next);
+                              }}
+                              style={{ width: 58, height: 38, background: colors.inputBg,
+                                border: `1px solid ${colors.inputBorder}`,
+                                color: colors.gold, borderRadius: 8, fontSize: 15,
+                                textAlign: "center", fontWeight: "bold" }} />
+                            <span style={{ color: colors.textMuted, fontSize: 11 }}>təkrar</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div style={{ background: D ? "#0d1a2a" : "#e3f2fd", borderRadius: 10, padding: 12, border: `1px solid ${D ? "#1a3a5a" : "#90caf9"}` }}>
+            <div style={{ color: D ? "#5B9BD5" : "#223355", fontWeight: "bold", fontSize: 13, marginBottom: 10 }}>📊 İdman Sonrası Dəyərləndirmə</div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>⚡ Enerji:</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[["1","😩"],["2","😕"],["3","😐"],["4","😊"],["5","🔥"]].map(([n, emoji]) => (
+                  <button key={n} onClick={() => updateLog(selTarix, { ...selLog, enerji: Number(n) })}
+                    style={{ flex: 1, height: 44, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: "bold",
+                      background: selLog.enerji === Number(n) ? "#FFD700" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.enerji === Number(n) ? "#000" : (D ? "#aaa" : "#333") }}>
+                    {emoji}<br/><span style={{fontSize:10}}>{n}/5</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>😊 Ruh halı:</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[["😴","Yorğun"],["😐","Orta"],["🙂","Yaxşı"],["😄","Əla"],["🔥","Möhtəşəm"]].map(([emoji, label]) => (
+                  <button key={label} onClick={() => updateLog(selTarix, { ...selLog, ruhhal: label })}
+                    style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12,
+                      background: selLog.ruhhal === label ? "#5B9BD5" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.ruhhal === label ? "#fff" : (D ? "#aaa" : "#222") }}>
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>💪 Əzələ ağrısı:</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[["✅","Yoxdur"],["⚠️","Az"],["🔴","Çox"]].map(([emoji, label]) => (
+                  <button key={label} onClick={() => updateLog(selTarix, { ...selLog, agri: label })}
+                    style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12,
+                      background: selLog.agri === label ? "#5B9BD5" : (D ? "#1a1a35" : "#d0d0e8"),
+                      color: selLog.agri === label ? "#fff" : (D ? "#aaa" : "#222") }}>
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 5 }}>📝 Qeyd (ağrı, enerji, hiss):</div>
+              <textarea
+                value={selLog.note || ""}
+                onChange={e => updateLog(selTarix, { ...selLog, note: e.target.value })}
+                placeholder="Məs: sol dirsəkdə yüngül ağrı, enerji yaxşı idi..."
+                rows={3}
+                style={{ width: "100%", background: colors.inputBg, border: `1px solid ${colors.inputBorder}`,
+                  color: colors.text, borderRadius: 8, padding: "10px", fontSize: 13, resize: "none", outline: "none",
+                  fontFamily: "Arial, sans-serif", lineHeight: 1.6 }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gorunus === "teqvim" && filteredGunler.length > 0 && (() => {
+        const [d0, m0, y0] = filteredGunler[0].tarix.split(".").map(Number);
+        const bosluq = (new Date(y0, m0 - 1, d0).getDay() + 6) % 7;
+        return (
+          <div style={{ background: colors.card, border: `1px solid ${colors.statBorder}`, borderRadius: 12, padding: 10, maxWidth: 480, margin: "0 auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5, marginBottom: 5 }}>
+              {["B.e","Ç.a","Ç","C.a","C","Ş","B"].map((h, i) => (
+                <div key={h} style={{ textAlign: "center", fontSize: 11, fontWeight: "bold", color: i >= 5 ? colors.gold : colors.textMuted }}>{h}</div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
+              {Array.from({ length: bosluq }).map((_, i) => <div key={"b" + i} />)}
+              {filteredGunler.map(g => {
+                const log = getLog(g.tarix);
+                const isSel = selTarix === g.tarix;
+                const isToday = g.tarix === bugunTarix;
+                const prog = log.gymGun ? GYM_PROQRAM[log.gymGun] : null;
+                return (
+                  <button key={g.tarix} onClick={() => setSelTarix(isSel ? null : g.tarix)}
+                    title={`${g.tarix} · ${g.gun}`}
+                    style={{ aspectRatio: "1 / 1", minHeight: 40, borderRadius: 8, cursor: "pointer", padding: 2,
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1,
+                      background: isSel ? colors.gold : log.done ? colors.rowDone : colors.row1,
+                      border: isToday ? `2px solid ${colors.gold}` : `1px solid ${log.done ? colors.rowBorderDone : colors.rowBorder}`,
+                      color: isSel ? colors.ayActiveTxt : log.done ? colors.textDone : colors.text }}>
+                    <span style={{ fontSize: 14, fontWeight: "bold" }}>{Number(g.tarix.slice(0, 2))}</span>
+                    <span style={{ fontSize: 10, lineHeight: 1, minHeight: 10, fontWeight: "bold", color: isSel ? colors.ayActiveTxt : prog ? prog.color : undefined }}>
+                      {prog ? log.gymGun : log.done ? "✅" : hasNote(log) ? "📝" : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 8, fontSize: 10, color: colors.textMuted, flexWrap: "wrap" }}>
+              <span style={{ color: colors.textDone }}>■ tamamlandı</span>
+              {["A","B","C"].map(k => <span key={k} style={{ color: GYM_PROQRAM[k].color, fontWeight: "bold" }}>{k} = {GYM_PROQRAM[k].label}</span>)}
+              <span>📝 qeyd</span><span style={{ color: colors.gold }}>▢ bu gün</span>
+            </div>
+          </div>
+        );
+      })()}
+
+      {gorunus === "siyahi" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {filteredGunler.map((g) => {
+          const log = getLog(g.tarix);
+          const done = log.done;
+          const note = hasNote(log);
+          const isSel = selTarix === g.tarix;
+          const isToday = g.tarix === bugunTarix;
+          const progColor = log.gymGun ? GYM_PROQRAM[log.gymGun].color : null;
+          return (
+            <div key={g.tarix} onClick={() => setSelTarix(isSel ? null : g.tarix)}
+              style={{
+                background: isSel ? (D ? "#1e1e40" : "#dde8f5") : done ? colors.rowDone : colors.row1,
+                border: isToday && !isSel ? `2px solid ${colors.gold}` : `1px solid ${isSel ? colors.gold : done ? colors.rowBorderDone : colors.rowBorder}`,
+                borderRadius: 8, padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10
+              }}>
+              <div style={{ fontSize: 18, minWidth: 24, textAlign: "center" }}>
+                {done ? "✅" : note ? "📝" : "⬜"}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ color: colors.textMuted, fontSize: 11 }}>{g.tarix}</span>
+                  <span style={{ color: done ? colors.textDone : colors.text, fontSize: 13, fontWeight: "bold" }}>{g.gun}</span>
+                  {isToday && <span style={{ background: colors.gold, color: colors.ayActiveTxt, fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 8px" }}>Bu gün</span>}
+                  {log.gymGun && (
+                    <span style={{ fontSize: 10, fontWeight: "bold", color: progColor, background: progColor + "22",
+                      padding: "2px 7px", borderRadius: 10 }}>{GYM_PROQRAM[log.gymGun].label}</span>
+                  )}
+                  {log.muddet > 0 && (
+                    <span style={{ fontSize: 10, color: colors.textMuted }}>⏱️ {log.muddet} dəq</span>
+                  )}
+                </div>
+              </div>
+              <div style={{ color: colors.textMuted, fontSize: 16 }}>›</div>
+            </div>
+          );
+        })}
+      </div>}
+
+      {restEnd && (
+        <div style={{ position: "fixed", left: "50%", bottom: 16, transform: "translateX(-50%)", zIndex: 50,
+          display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 30,
+          background: restQalan === 0 ? "#4CAF50" : colors.card, border: `2px solid ${restQalan === 0 ? "#4CAF50" : colors.gold}`,
+          boxShadow: "0 6px 20px rgba(0,0,0,0.35)" }}>
+          <span style={{ fontSize: 22, fontWeight: "bold", fontVariantNumeric: "tabular-nums",
+            color: restQalan === 0 ? "#fff" : colors.gold }}>
+            {restQalan === 0 ? "💪 Növbəti set!" : `⏱️ ${Math.floor(restQalan / 60)}:${String(restQalan % 60).padStart(2, "0")}`}
+          </span>
+          <button onClick={() => setRestEnd(null)}
+            style={{ background: "transparent", border: "none", fontSize: 18, cursor: "pointer",
+              color: restQalan === 0 ? "#fff" : colors.textMuted }}>✕</button>
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20, paddingBottom: 20, flexWrap: "wrap" }}>
+        <button onClick={handleSave}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, border: "none", cursor: "pointer",
+            background: saveStatus === "saved" ? "#4CAF50" : (D ? colors.gold : "#1565c0"),
+            color: saveStatus !== "saved" && D ? "#0d0d1a" : "#ffffff" }}>
+          {saveStatus === "saved" ? "✅ Saxlanıldı!" : "💾 Saxla"}
+        </button>
+        <button onClick={handleExport}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: copyStatus === "copied" ? "#5B9BD5" : colors.statBg,
+            color: copyStatus === "copied" ? "#fff" : "#5B9BD5",
+            border: "1px solid #5B9BD5" }}>
+          {copyStatus === "copied" ? "✅ Kopyalandı!" : "📋 Kloda paylaş"}
+        </button>
+        <button onClick={handleBackup}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: backupStatus === "done" ? "#2e7d32" : "transparent",
+            color: backupStatus === "done" ? "#fff" : "#4CAF50",
+            border: "1px solid #4CAF50" }}>
+          {backupStatus === "done" ? "✅ Yedəkləndi!" : "📥 Yedəklə"}
+        </button>
+        <button onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          style={{ padding: "12px 30px", fontSize: 14, fontWeight: "bold", borderRadius: 10, cursor: "pointer",
+            background: restoreStatus === "done" ? "#e65100" : "transparent",
+            color: restoreStatus === "done" ? "#fff" : "#FF9800",
+            border: `1px solid ${restoreStatus === "error" ? "#f44336" : "#FF9800"}` }}>
+          {restoreStatus === "done" ? "✅ Bərpa olundu!" : restoreStatus === "error" ? "⚠ Səhv fayl" : "📂 Bərpa et"}
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/json"
+          onChange={e => { handleRestoreFile(e.target.files[0]); e.target.value = ""; }}
+          style={{ display: "none" }} />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
